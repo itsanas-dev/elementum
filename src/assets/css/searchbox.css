@@ -1,0 +1,40 @@
+.searchbox-wrapper {
+  position: absolute;
+  display: inline-flex;
+  background-color: var(--color-input-background);
+  padding: 0.75rem 0.9rem;
+  border-radius: 9999px;
+  width: fit-content;
+  gap: 0.5rem;
+  align-items: center;
+
+  min-width: 150px;
+  width: 21rem;
+  left: 50%;
+  top: 4rem;
+
+  transform: translate(-50%, -50%);
+}
+
+.searchbox-wrapper > .search-icon {
+  flex-shrink: 0;
+}
+
+.searchbox {
+  background: transparent;
+  outline: none;
+  border: none;
+
+  font-size: 0.8rem;
+}
+
+.searchbox::placeholder {
+  color: var(--color-input-placeholder);
+}
+
+@media screen and (max-width: 620px) {
+  .searchbox-wrapper {
+    top: 3rem;
+    width: 80vw;
+  }
+}

@@ -2,7 +2,7 @@ import { displayDecimal } from "@/util/string";
 import type { TableElement, TooltipPosition } from "@/types";
 import clsx from "clsx";
 import type { JSX } from "react";
-import { toTitleCase } from "@/util/string";
+import "@/assets/css/tooltip.css"
 
 type TooltipProps = {
   side: TooltipPosition

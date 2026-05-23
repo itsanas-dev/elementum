@@ -2,8 +2,9 @@ import PeriodicTable from '@/components/PeriodicTable'
 import { useEffect, useState } from 'react'
 import type { PeriodicTableSchema } from './types'
 import LoadingFallback from './components/fallback/LoadingFallback';
-import '@/assets/css/App.css'
+import '@/assets/css/app.css'
 import TooltipRenderer from './components/TooltipRenderer';
+import Searchbar from './components/Searchbar';
 
 function App() {
   const [table, setTable] = useState<PeriodicTableSchema|null>(null);
@@ -34,7 +35,10 @@ function App() {
       <main className="centered">
         { 
           table ?
-          <PeriodicTable table={table} />
+          <>
+            <PeriodicTable table={table} />
+            <Searchbar />
+          </>
           :
           <LoadingFallback />
         }
