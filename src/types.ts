@@ -1,7 +1,9 @@
+import type { Vec2 } from "./math";
+
 export type ElementBlock = "s" | "p" | "d" | "f";
 export type EntryType = "element" | "separation"
 
-export type PeriodicTableStruct = {
+export type PeriodicTableSchema = {
   order: string[]
 } & Record<string, TableEntry|undefined>
 
@@ -64,3 +66,8 @@ export type TableSeparator = BaseEntryProperties & {
 }
 
 export type TableEntry = | TableElement | TableSeparator
+
+export type TooltipPosition = {
+  side: "right" | "left" | "top" | "bottom",
+  position: Vec2
+}

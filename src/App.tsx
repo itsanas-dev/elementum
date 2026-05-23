@@ -1,14 +1,14 @@
-import '@/assets/css/App.css'
 import PeriodicTable from '@/components/PeriodicTable'
 import { useEffect, useState } from 'react'
-import type { PeriodicTableStruct } from './types'
+import type { PeriodicTableSchema } from './types'
+import LoadingFallback from './components/fallback/LoadingFallback';
+import '@/assets/css/App.css'
+import TooltipRenderer from './components/TooltipRenderer';
 
 function App() {
-  const [table, setTable] = useState<PeriodicTableStruct|null>(null);
+  const [table, setTable] = useState<PeriodicTableSchema|null>(null);
 
   useEffect(() => {
-    const controller = new AbortController();
-    
     async function fetchTableJson() {
       const res = await fetch("/periodic_table.json", {
         method: "GET",
@@ -16,31 +16,28 @@ function App() {
           'Accept': "application/json"
         },
 
-        signal: controller.signal
       });
 
-      console.log(res.status)
-
       if (res.ok) {
-        const tableStruct: PeriodicTableStruct = await res.json();
+        const tableStruct: PeriodicTableSchema = await res.json();
 
         setTable(tableStruct);
       }
     }
 
     fetchTableJson();
-    return () => {
-      controller.abort();
-    }
   }, [])
-
-  useEffect(() => console.log(table), [table])
-
 
   return (
     <>
+      <TooltipRenderer />
       <main className="centered">
-        {table && <PeriodicTable table={table} />}
+        { 
+          table ?
+          <PeriodicTable table={table} />
+          :
+          <LoadingFallback />
+        }
       </main>
     </>
   )

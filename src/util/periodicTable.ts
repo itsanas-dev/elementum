@@ -1,7 +1,7 @@
-import { T_ENTRY_BORDERBOTTOM, T_ENTRY_BORDERRIGHT, type TableEntry } from "./types";
+import { T_ENTRY_BORDERBOTTOM, T_ENTRY_BORDERRIGHT, type TableEntry } from "../types";
 
-const HALOGEN_COLOUR = "#a46198";
-const NOBLE_GAS_COLOUR = "#893fa3";
+const HALOGEN_COLOUR = "#be61af";
+const NOBLE_GAS_COLOUR = "#a452c2";
 
 const CATEGORY_COLOURS: Record<string, string> = {
   "metalloid": "#55b7bb",
@@ -13,7 +13,7 @@ const CATEGORY_COLOURS: Record<string, string> = {
 
 export function getEntryColour(element: TableEntry) {
   if (element.type === "separation") {
-    return "#4e9bb1";
+    return "#8cb8c6";
   }
 
   if (element.group === 17) return HALOGEN_COLOUR;
@@ -30,16 +30,6 @@ export function getEntryColour(element: TableEntry) {
   }
 
   return "#FFF";
-}
-
-export function displayAtomicMass(mass: number) {
-  const dpart = mass % 1;
-
-  if (Math.abs(dpart) <= 1e-3) {
-    return mass.toFixed(0)
-  }
-
-  return mass.toFixed(3);
 }
 
 export function shouldDisplayRightBorder(entry: TableEntry) {

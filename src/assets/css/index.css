@@ -1,5 +1,7 @@
 :root {
-  font-family: "Raleway", var(--default-font-family);
+  --color-tooltip-bg: #181818;
+  --font-family: "Raleway", var(--default-font-family);
+  --color-br-separator: #2b2b2e;
 }
 
 html {
@@ -12,11 +14,15 @@ main {
   align-items: center;
 }
 
+#portal--tooltip {
+  position: relative;
+}
+
 body, main {
   min-height: 100vh;
 }
 
-body {
+button, input, body, label {
   font-family: var(--font-family);
 }
 

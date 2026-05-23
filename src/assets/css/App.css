@@ -1,3 +1,143 @@
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  transform-origin: center;
+  animation: spinner-load 600ms linear infinite;
+}
+
+.tooltip {
+  position: fixed;
+
+  background-color: var(--color-tooltip-bg);
+  fill: var(--color-tooltip-bg);
+
+  border-radius: 3px;
+  padding: 0.75rem 0.75rem;
+  font-size: 0.8rem;
+
+  height: fit-content;
+  max-width: 300px;
+  min-height: 60px;
+  border-radius: 3px;
+
+  animation-duration: 150ms;
+  animation-timing-function: cubic-bezier(.43,1.35,.57,.91);
+
+  z-index: 99;
+}
+
+/* Tooltip chevron */
+.tooltip::before {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 18px;
+  background-color: var(--color-tooltip-bg);
+  z-index: 999;
+}
+
+.tooltip-header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  justify-content: space-between;
+  gap: 4px 12px;
+
+  margin-bottom: 0.25rem;
+}
+
+.tooltip-elementsymbol {
+  font-size: 2.25rem;
+}
+
+.tooltip-configuration, .tooltip-molarmass {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.tooltip-configuration {
+  font-size: 1rem;
+}
+
+.tooltip-row {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+}
+
+.tooltip-content {
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tooltip-separator {
+  margin-block: 0.5rem;
+  background-color: var(--color-br-separator);
+  width: 100%;
+  height: 1px;
+}
+
+.tooltip[data-side="top"] {
+  transform: translate(-50%, -100%);
+  transform-origin: center bottom;
+
+  animation-name: tooltip-slide-down;
+}
+
+.tooltip[data-side="top"]::before {
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 100%);
+  clip-path: polygon(0 0, 50% 50%, 100% 0);
+}
+
+.tooltip[data-side="bottom"] {
+  transform: translateX(-50%);
+  transform-origin: center top;
+  animation-name: tooltip-slide-up;
+}
+
+.tooltip[data-side="bottom"]::before {
+  left: 50%;
+  top: 0;
+
+  transform: translate(-50%, -100%);
+  clip-path: polygon(0 100%, 50% 50%, 100% 100%);
+}
+
+.tooltip[data-side="right"] {
+  transform: translateY(-50%);
+
+  transform-origin: left center;
+  animation-name: tooltip-slide-left;
+}
+
+.tooltip[data-side="right"]::before {
+  left: 0;
+  top: 50%;
+  transform: translate(-100%, -50%);
+  clip-path: polygon(100% 0%, 0 50%, 100% 100%);
+}
+
+.tooltip[data-side="left"] {
+  transform: translateY(-50%);
+
+  transform-origin: right center;
+  animation-name: tooltip-slide-right;
+}
+
+.tooltip[data-side="left"]::before {
+  right: 0%;
+  top: 50%;
+  transform: translate(100%, -50%);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
 .ptable-wrapper {
   overflow-y: hidden;
   overflow-x: auto;
@@ -9,6 +149,7 @@
 .ptable {
   display: grid;
   grid-template-columns: repeat(18, minmax(24px, 1fr));
+  gap: 1px;
 
   width: 100%;
   min-width: 1000px;
@@ -29,27 +170,20 @@
   background-color: transparent;
   border: 2px solid;
   border-color: var(--main-color);
-  border-right-style: none;
-  border-bottom-style: none;
 
   overflow: hidden;
   text-overflow: ellipsis;
   
   cursor: pointer;
-  transition: background 250ms ease;
+  transition: background 120ms ease, border 150ms ease;
 }
 
-.table-entry[data-entry-type="element"]:hover {
+.table-entry[data-entry-type="element"]:hover, 
+  .table-entry[data-entry-type="element"]:focus-visible
+{
   background-color: var(--main-color);
   color: var(--text-color);
-}
-
-.table-entry.border-right {
-  border-right-style: solid;
-}
-
-.table-entry.border-bottom {
-  border-bottom-style: solid;
+  z-index: 2;
 }
 
 .label-atomic-mass {
@@ -122,5 +256,58 @@
 
   .label-atomic-number {
     transform: translate(0.125rem, 0.125rem);
+  }
+}
+
+@keyframes spinner-load {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes tooltip-slide-down {
+  0% {
+    translate: 0 -4px;
+    opacity: 0;
+  }
+  
+  100% {
+    translate: 0 0;
+    opacity: 1;
+  }
+}
+
+@keyframes tooltip-slide-up {
+  0% {
+    translate: 0 4px;
+    opacity: 0;
+  }
+  100% {
+    translate: 0 0;
+    opacity: 1;
+  }
+}
+
+@keyframes tooltip-slide-left {
+  0% {
+    translate: 4px 0;
+    opacity: 0;
+  }
+  100% {
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+
+@keyframes tooltip-slide-right {
+  0% { 
+    translate: -4px 0;
+    opacity: 0;
+  }
+
+  100% {
+    translate: 0 0;
+    opacity: 1;
   }
 }
