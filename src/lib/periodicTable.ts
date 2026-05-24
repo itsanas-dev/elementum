@@ -1,4 +1,4 @@
-import { T_ENTRY_BORDERBOTTOM, T_ENTRY_BORDERRIGHT, type TableEntry } from "../types";
+import { type TableEntry } from "@/types";
 
 const HALOGEN_COLOUR = "#be61af";
 const NOBLE_GAS_COLOUR = "#a452c2";
@@ -30,12 +30,4 @@ export function getEntryColour(element: TableEntry) {
   }
 
   return "#FFF";
-}
-
-export function shouldDisplayRightBorder(entry: TableEntry) {
-  return (entry.showBorders & T_ENTRY_BORDERRIGHT) > 0;
-}
-
-export function shouldDisplayBottomBorder(entry: TableEntry) {
-  return (entry.showBorders & T_ENTRY_BORDERBOTTOM) > 0;
 }

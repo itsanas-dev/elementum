@@ -7,19 +7,9 @@ export type PeriodicTableSchema = {
   order: string[]
 } & Record<string, TableEntry|undefined>
 
-type BorderMask = 0 | 1 | 2 | 3;
-
-export const T_ENTRY_BORDERRIGHT = 0b01;
-export const T_ENTRY_BORDERBOTTOM = 0b10;
-
 type BaseEntryProperties = {
   xpos: number,
-  ypos: number,
-
-  // If bit 1 is set, right border is shown. If bit 2 is set, bottom border is shown.
-  // Otherwise, right and bottom are hidden. Used to avoid overlapping borders.
-  // Replace with a good algorithm that can work on any arbitrary table.
-  showBorders: BorderMask
+  ypos: number
 }
 
 export type TableElement = BaseEntryProperties & {
@@ -70,4 +60,32 @@ export type TableEntry = | TableElement | TableSeparator
 export type TooltipPosition = {
   side: "right" | "left" | "top" | "bottom",
   position: Vec2
+}
+
+export type SearchAction = "unknown" |
+                           "molar_mass" |
+                           "atomic_number" |
+                           "element_density" |
+                           "electronic_configuration_semantic" |
+                           "electronic_configuration_full" |
+                           "element_period" |
+                           "element_group" |
+                           "element_phase"
+
+export type SearchSchemaEntry = {
+  type: SearchAction,
+  keywords: string[],
+  params: {
+    elementCount: number, // The minimum number of elements required for this action to be applicable
+    isArithmetic: boolean // TODO: This is for arithmetic operations in the searchbox
+  },
+}
+
+export type SearchIntent = {
+  type: SearchAction,
+  confidence: number,
+
+  params: {
+    elements: TableElement[]
+  }
 }

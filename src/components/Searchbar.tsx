@@ -1,6 +1,6 @@
 import clsx from "clsx"
 import { Search } from "lucide-react"
-import { useState, type JSX } from "react"
+import { type JSX } from "react"
 import "@/assets/css/searchbox.css"
 
 type SearchbarProps = Omit<JSX.IntrinsicElements["input"], "onSubmit"> & {

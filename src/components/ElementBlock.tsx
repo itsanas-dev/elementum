@@ -1,6 +1,6 @@
-import { getTextColour } from "@/util/colour"
-import { getEntryColour, shouldDisplayBottomBorder, shouldDisplayRightBorder } from "@/util/periodicTable"
-import { displayDecimal } from "@/util/string"
+import { getTextColour } from "@/lib/colour"
+import { getEntryColour } from "@/lib/periodicTable"
+import { displayDecimal } from "@/lib/string"
 import type { TableElement } from "@/types"
 import clsx from "clsx"
 import React, { type CSSProperties, type JSX, type MouseEvent } from "react"
@@ -22,13 +22,7 @@ function ElementBlockComponent({ element, onClick, className, ...rest }: Element
           data-entry-type={element.type} 
           role="gridcell"
           onClick={(e) => onClick?.(e)}
-          className={
-          clsx("table-entry", 
-            {
-              "border-right": shouldDisplayRightBorder(element), 
-              "border-bottom": shouldDisplayBottomBorder(element)
-            }, className)
-          } 
+          className={clsx("table-entry", className)}
           style={style} 
           aria-label={`${element.name} (${element.symbol}), with atomic number ${element.number.toFixed(0)} and atomic mass ${displayDecimal(element.atomic_mass)}`}
         >

@@ -5,6 +5,7 @@ import LoadingFallback from './components/fallback/LoadingFallback';
 import '@/assets/css/app.css'
 import TooltipRenderer from './components/TooltipRenderer';
 import Searchbar from './components/Searchbar';
+import TableProvider from './components/provider/TableProvider';
 
 function App() {
   const [table, setTable] = useState<PeriodicTableSchema|null>(null);
@@ -33,15 +34,17 @@ function App() {
     <>
       <TooltipRenderer />
       <main className="centered">
-        { 
-          table ?
-          <>
-            <PeriodicTable table={table} />
-            <Searchbar />
-          </>
-          :
-          <LoadingFallback />
-        }
+        <TableProvider elementTable={table}>
+          { 
+            table ?
+            <>
+              <PeriodicTable table={table} />
+              <Searchbar />
+            </>
+            :
+            <LoadingFallback />
+          }
+        </TableProvider>
       </main>
     </>
   )

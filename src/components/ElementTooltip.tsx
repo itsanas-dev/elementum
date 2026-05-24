@@ -1,4 +1,4 @@
-import { displayDecimal } from "@/util/string";
+import { displayDecimal } from "@/lib/string";
 import type { TableElement, TooltipPosition } from "@/types";
 import clsx from "clsx";
 import type { JSX } from "react";
