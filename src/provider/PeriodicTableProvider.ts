@@ -1,12 +1,13 @@
-import type { PeriodicTableSchema, TableElement } from "@/types"
+import type { PeriodicTableSchema } from "@/types"
 import { createContext } from "react"
 
 export type PeriodicTableProviderObject = {
   elementTable: PeriodicTableSchema|null,
 
-  elementSymbolLookup: Record<string, TableElement>|null,
-  groupLookup: Record<number, TableElement[]>|null,
-  periodLookup: Record<number, TableElement[]>|null
+  /// Converts a symbol, group or the period to an id that can be indexed into elementTable.
+  elementSymbolLookup: Record<string, string>|null,
+  groupLookup: Record<number, string[]>|null,
+  periodLookup: Record<number, string[]>|null
 }
 
 export const PeriodicTableProvider = createContext<PeriodicTableProviderObject>({

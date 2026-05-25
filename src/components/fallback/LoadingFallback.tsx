@@ -1,13 +1,12 @@
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, type LucideProps } from "lucide-react";
+import type { RefAttributes } from "react";
 
-type Props = {
-  size?: number
-}
+type Props = Omit<RefAttributes<SVGSVGElement>, "ref"> & LucideProps
 
-export default function LoadingFallback({size}: Props) {
+export default function LoadingFallback({size, ...rest}: Props) {
   return (
     <div className="loading-spinner">
-      <LoaderCircle size={size ?? 32} />
+      <LoaderCircle size={size ?? 32} {...rest} />
     </div>
   )
 }

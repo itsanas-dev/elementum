@@ -10,7 +10,7 @@ type ProviderProps = {
 function createLookup(table: PeriodicTableSchema|null, mapper: (entry: TableElement) => string) {
   if (!table) return null;
 
-  const lookup: Record<string, TableElement> = {};
+  const lookup: Record<string, string> = {};
 
   for (const key of Object.keys(table)) {
     if (key === "order") continue;
@@ -23,21 +23,21 @@ function createLookup(table: PeriodicTableSchema|null, mapper: (entry: TableElem
     
     if (!lookupKey) continue;
 
-    lookup[lookupKey] = element;
+    lookup[lookupKey] = key;
   }
 
   return lookup;
 }
 
 export default function TableProvider({ elementTable, children }: ProviderProps) {
-  const symbolLookup = useMemo<Record<string, TableElement>|null>(() => createLookup(elementTable, (entry) => {
+  const symbolLookup = useMemo<Record<string, string>|null>(() => createLookup(elementTable, (entry) => {
     return entry.symbol;
   }), [elementTable]);
 
-  const groupLookup = useMemo<Record<number, TableElement[]>|null>(() => {
+  const groupLookup = useMemo<Record<number, string[]>|null>(() => {
     if (!elementTable) return null;
 
-    const lookup: Record<number, TableElement[]> = {};
+    const lookup: Record<number, string[]> = {};
 
     for (const key of Object.keys(elementTable)) {
       if (key === "order") continue;
@@ -52,16 +52,16 @@ export default function TableProvider({ elementTable, children }: ProviderProps)
         lookup[groupKey] = []
       }
 
-      lookup[groupKey].push(element);
+      lookup[groupKey].push(key);
     }
 
     return lookup;
   }, [elementTable])
   
-  const periodLookup = useMemo<Record<number, TableElement[]>|null>(() => {
+  const periodLookup = useMemo<Record<number, string[]>|null>(() => {
     if (!elementTable) return null;
 
-    const lookup: Record<number, TableElement[]> = {};
+    const lookup: Record<number, string[]> = {};
 
     for (const key of Object.keys(elementTable)) {
       if (key === "order") continue;
@@ -76,7 +76,7 @@ export default function TableProvider({ elementTable, children }: ProviderProps)
         lookup[periodKey] = []
       }
 
-      lookup[periodKey].push(element);
+      lookup[periodKey].push(key);
     }
 
     return lookup;

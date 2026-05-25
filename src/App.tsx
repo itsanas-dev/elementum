@@ -38,8 +38,8 @@ function App() {
           { 
             table ?
             <>
-              <PeriodicTable table={table} />
               <Searchbar />
+              <PeriodicTable table={table} />
             </>
             :
             <LoadingFallback />

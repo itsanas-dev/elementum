@@ -1,4 +1,5 @@
-import { type TableEntry } from "@/types";
+import { type PeriodicTableSchema, type TableEntry } from "@/types";
+import type { ParsedElement } from "./search";
 
 const HALOGEN_COLOUR = "#be61af";
 const NOBLE_GAS_COLOUR = "#a452c2";
@@ -30,4 +31,45 @@ export function getEntryColour(element: TableEntry) {
   }
 
   return "#FFF";
+}
+
+export function calculateAtomicMass(table: PeriodicTableSchema, parsed: ParsedElement[]) {
+  let mass = 0;
+
+  for (const element of parsed) {
+    for (const el of element.composition) {
+      const entry = table[el.id];
+
+      if (!entry || entry.type !== "element") break;
+
+      mass += entry.atomic_mass * el.count;
+    }
+  }
+
+  return mass;
+}
+
+export function calculateAtomicNumber(table: PeriodicTableSchema, parsed: ParsedElement[]) {
+  let number = 0;
+
+  for (const element of parsed) {
+    for (const el of element.composition) {
+      const entry = table[el.id];
+
+      if (!entry || entry.type !== "element") break;
+
+      number += entry.number * el.count;
+    }
+  }
+
+  return number;
+}
+
+export function toCelsius(tKelvin: number) {
+  return tKelvin - 273.15;
+}
+
+/// why are american temperature units so weird.
+export function toFahrenheit(tKelvin: number) {
+  return (tKelvin - 273.15) * 1.8 + 32;
 }

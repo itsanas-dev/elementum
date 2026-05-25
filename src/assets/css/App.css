@@ -56,8 +56,8 @@
 }
 
 .label-atomic-mass {
-  --translate-x: 0.25rem;
-  --translate-y: -0.25rem;
+  --translate-x: 0.175rem;
+  --translate-y: -0.175rem;
   position: absolute;
   left: 0;
   bottom: 0;
@@ -82,8 +82,8 @@
 }
 
 .entry-name {
-  margin-top: -2px;
-  font-size: 0.5rem;
+  margin-top: -3px;
+  font-size: 0.6rem;
 }
 
 .separator-range-label {
@@ -104,8 +104,8 @@
   }
 
   .label-atomic-mass {
-    --translate-x: 0.125rem;
-    --translate-y: -0.125rem;
+    --translate-x: 0.075rem;
+    --translate-y: -0.075rem;
   }
 
   .label-atomic-number {

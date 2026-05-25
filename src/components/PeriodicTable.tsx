@@ -1,7 +1,6 @@
 import {type PeriodicTableSchema, type TableElement, type TableEntry, type TooltipPosition } from "@/types"
 import { ElementBlock } from "./ElementBlock";
 import SeparatorBlock from "./SeparatorBlock";
-import { vec2 } from "@/math";
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Tooltip from "./ElementTooltip";
@@ -13,6 +12,10 @@ type PeriodicTableComponentProps = {
 type TooltipState = {
   clickedElement: string,
   position: TooltipPosition
+}
+
+function vec2(x: number, y: number) {
+  return {x, y}
 }
 
 function getTooltipPosition(element: HTMLElement): TooltipPosition {

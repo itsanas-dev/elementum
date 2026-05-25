@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { evaluateUserSearch } from "../search";
+import { evaluateUserSearch, parseCompound } from "../search";
 
 describe("evaluateUserSearch", () => {
   it.each([
@@ -10,13 +10,22 @@ describe("evaluateUserSearch", () => {
     const result = evaluateUserSearch(query);
 
     // TODO: Replace with some enum, since raw strings are fragile.
-    expect(result.type).toBe("unknown");
-    expect(result.confidence).toBe(1);
+    expect(result.evaluation).toHaveLength(1);
+    expect(result.evaluation[0]).toMatchObject({
+      type: "unknown",
+      confidence: 1
+    })
   });
 
   it("should match molar mass", () => {
-    const result = evaluateUserSearch("molar mass of Ca");
-    expect(result.type).toBe("molar_mass");
+    const result = evaluateUserSearch("molar mass of Ca", (e) => (e === "Ca" ? "calcium" : null));
+    
+    console.log(result)
+    expect(result.evaluation).toHaveLength(1);
+    expect(result.evaluation[0]).toMatchObject({
+      type: "molar_mass",
+      confidence: 1
+    })
   });
 
   it("should ignore stop words", () => {
@@ -27,18 +36,30 @@ describe("evaluateUserSearch", () => {
 
   describe("ambiguous queries", () => {
     it("should have lower confidence when query is ambiguous", () => {
-      const specific = evaluateUserSearch("molar mass");
-      const ambiguous = evaluateUserSearch("molar mass electronic configuration");
+      const matchElement = (e: string) => e === "Mg" ? "magnesium" : null;
+      
+      const specific = evaluateUserSearch("molar mass Mg", matchElement);
+      const ambiguous = evaluateUserSearch("Mg molar mass electronic configuration", matchElement);
 
-      expect(ambiguous.confidence).toBeLessThan(specific.confidence);
+      expect(ambiguous.evaluation).toHaveLength(2);
+      expect(ambiguous.evaluation[0].type).toBe("electronic_configuration_semantic");
+      expect(ambiguous.evaluation[1].type).toBe("molar_mass");
+      expect(ambiguous.evaluation[0].confidence).toBeGreaterThan(0.5);
+      expect(ambiguous.evaluation[0].confidence + ambiguous.evaluation[1].confidence).toBeCloseTo(1);
+      
+      expect(specific.evaluation).toHaveLength(1);
+      expect(specific.evaluation[0].type).toBe(ambiguous.evaluation[1].type)
+      expect(specific.evaluation[0].confidence).toBe(1);
     });
 
     it("should prefer the longer keyword when multiple match", () => {
-      const result = evaluateUserSearch("atomic number and electronic configuration");
+      const matchElement = (e: string) => e === "Mg" ? "magnesium" : null;
+      const result = evaluateUserSearch("atomic number, density and electronic configuration of Mg", matchElement);
 
-      expect(result.type).toBe("electronic_configuration_semantic");
-      expect(result.confidence).toBeGreaterThan(0);
-      expect(result.confidence).toBeLessThan(1);
+      expect(result.evaluation).toHaveLength(3)
+      expect(result.evaluation[0].type).toBe("electronic_configuration_semantic");
+      expect(result.evaluation[1].type).toBe("atomic_number")
+      expect(result.evaluation[2].type).toBe("element_density")
     });
   });
 
@@ -46,16 +67,161 @@ describe("evaluateUserSearch", () => {
     // FIXME: It matches non-alphanumeric words, not characters.
     // It should match and remove non-alphanumeric characters.
     
-    // it("should strip non-alphanumeric characters", () => {
-    //   const clean  = evaluateUserSearch("molar mass");
-    //   const dirty  = evaluateUserSearch("molar mass???");
-    //   expect(clean).toStrictEqual(dirty);
-    // });
+    it("should strip non-alphanumeric characters", () => {
+      const clean  = evaluateUserSearch("molar mass");
+      const dirty  = evaluateUserSearch("molar mass???");
+      expect(clean).toStrictEqual(dirty);
+    });
 
     it("should handle punctuation-only input", () => {
       const result = evaluateUserSearch("???!!!");
-      expect(result.type).toBe("unknown");
-      expect(result.confidence).toBe(1);
+      expect(result.params.elements).toHaveLength(0);
+      expect(result.evaluation[0]).toMatchObject({
+        type: "unknown",
+        confidence: 1
+      })
+    });
+  });
+
+  describe("element and compound recognition", () => {
+    const matchElement = (e: string) => {
+      const elements: Record<string, string> = {
+        "Ca": "calcium",
+        "Na": "sodium",
+        "S":  "sulfur",
+        "H":  "hydrogen",
+        "O":  "oxygen",
+        "Fe": "iron",
+        "Mg": "magnesium",
+      };
+      const ids = Object.values(elements);
+
+      if (ids.includes(e.toLowerCase())) return e;
+
+      return elements[e] ?? null;
+    };
+
+    describe("single elements", () => {
+      it("should recognize a single element symbol", () => {
+        const result = parseCompound("Ca", matchElement);
+        expect(result).toMatchObject({ composition: [{ id: "calcium", count: 1 }] });
+      });
+
+      it("should recognize a two-character symbol", () => {
+        const result = parseCompound("Fe", matchElement);
+        expect(result).toMatchObject({ composition: [{ id: "iron", count: 1 }] });
+      });
+
+      it("should recognize an element by full name", () => {
+        const result = parseCompound("calcium", matchElement);
+        expect(result).toMatchObject({ composition: [{ id: "calcium", count: 1 }] });
+      });
+
+      it("should match molecules", () => {
+        const result = parseCompound("S8", matchElement);
+        expect(result).toMatchObject({ composition: [{id: "sulfur", count: 8}] })
+      });
+
+      it.each([
+        ["Empty string", ""],
+        ["Lowercase symbol", "ca"],
+        ["Uppercase symbol", "CA"],
+        ["incorrectly-cased symbol", "cA"]
+      ])("should be case sensitive. %s should not match.", (_, query) => {
+        const result = parseCompound(query, matchElement);
+        expect(result).toBeNull();
+      });
+
+      it("should return null for an unknown symbol", () => {
+        const result = parseCompound("Xx", matchElement);
+        expect(result).toBeNull();
+      });
+
+      it("should return null for gibberish", () => {
+        const result = parseCompound("Xkqz", matchElement);
+        expect(result).toBeNull();
+      });
+    });
+
+    describe("compounds", () => {
+      it("should parse a simple two-element compound", () => {
+        const result = parseCompound("CaS", matchElement);
+        expect(result).toMatchObject({
+          composition: [
+            { id: "calcium", count: 1 },
+            { id: "sulfur",  count: 1 }
+          ]
+        });
+      });
+
+      it("should recognize more complicated compounds", () => {
+        const result = parseCompound("Na2SO4", matchElement);
+        expect(result).toMatchObject({
+          composition: [
+            {id: "sodium", count: 2},
+            {id: "sulfur", count: 1},
+            {id: "oxygen", count: 4}
+          ]
+        })
+      });
+
+      it("should parse subscripts correctly", () => {
+        const result = parseCompound("H2O", matchElement);
+        expect(result).toMatchObject({
+          composition: [
+            { id: "hydrogen", count: 2 },
+            { id: "oxygen",   count: 1 }
+          ]
+        });
+      });
+
+      it("should return null if any element in the compound is unrecognized", () => {
+        expect(parseCompound("CaXx", matchElement)).toBeNull();
+      });
+
+      it("should return null if all elements are unrecognized", () => {
+        expect(parseCompound("XxZz", matchElement)).toBeNull();
+      });
+    });
+
+    describe("edge cases", () => {
+      it("should return null with no validate function", () => {
+        expect(parseCompound("Ca")).toBeNull();
+      });
+
+      it("should return null for a number-only string", () => {
+        expect(parseCompound("123", matchElement)).toBeNull();
+      });
+
+      it("should not return null for impossible element subscripts like S101, since they are hard to validate.", () => {
+        expect(parseCompound("S101", matchElement)).not.toBeNull();
+      });
+
+      it("should return null for a lowercase word that is not a name", () => {
+        expect(parseCompound("mass", matchElement)).toBeNull();
+      });
+    });
+
+    describe("integration with evaluateUserSearch", () => {
+      it("should include compound elements in params", () => {
+        const result = evaluateUserSearch("molar mass CaS", matchElement);
+        expect(result.params.elements[0]).toMatchObject({
+          composition: [
+            { id: "calcium", count: 1 },
+            { id: "sulfur",  count: 1 }
+          ]
+        });
+      });
+
+      it("should reject compound for schema entries that disallow them", () => {
+        const result = evaluateUserSearch("electronic configuration CaS", matchElement);
+        expect(result.evaluation[0].type).toBe("unknown");
+      });
+
+      it("should accept compound for schema entries that allow them", () => {
+        const result = evaluateUserSearch("molar mass H2O", matchElement);
+        expect(result.evaluation[0].type).toBe("molar_mass");
+      });
     });
   });
 });
