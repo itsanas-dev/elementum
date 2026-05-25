@@ -30,7 +30,7 @@ const SearchboxEntry = React.memo(({ intentEntry, elements }: SearchboxEntryProp
       <div className="searchbox-entry" aria-hidden>
         {
           (evaluation.action && evaluation.action.length > 0) && 
-          <p className="searchbox-expression">{evaluation.action}</p>
+          <p className="searchbox-expression text-muted">{evaluation.action}</p>
         }
 
         {

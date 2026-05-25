@@ -65,6 +65,7 @@ const SearchSchema: SearchSchemaEntry[] = [
     type: "molar_mass",
     params: {argumentCount: 1, allowCompounds: true},
     keywords: [
+      "mr",
       "mass",
       "molecular mass",
       "molecule mass",
@@ -74,7 +75,8 @@ const SearchSchema: SearchSchemaEntry[] = [
       "nucleon number", 
       "relative molecular mass", 
       "relative formula mass", 
-      "atomic weight"
+      "atomic weight",
+      "A"
     ]
   },
 
@@ -82,10 +84,16 @@ const SearchSchema: SearchSchemaEntry[] = [
     type: "electronic_configuration_semantic",
     params: {argumentCount: 1, allowCompounds: false},
     keywords: [
+      "short electronic configuration",
+      "shorthand electron",
+      "semantic electron",
+      "semantic electronic configuration",
       "electronic configuration", 
       "electronic structure", 
       "electron arrangement",
       "electronic",
+      "electron",
+      "configuration",
       "electron configuration",
       "orbital configuration",
       "atomic configuration",
@@ -97,14 +105,26 @@ const SearchSchema: SearchSchemaEntry[] = [
     type: "electronic_configuration_full",
     params: {argumentCount: 1, allowCompounds: false},
     keywords: [
-      "todo_electronic_configuration"
+      "full electronic configuration",
+      "electronic configuration", 
+      "electronic structure", 
+      "electron arrangement",
+      "electronic",
+      "electron",
+      "configuration",
+      "electron configuration",
+      "full orbital configuration",
+      "orbital configuration",
+      "full atomic configuration",
+      "atomic configuration",
+      "electron distribution"
     ],
   },
 
   {
     type: "element_density",
     params: {argumentCount: 1, allowCompounds: false},
-    keywords: ["density"]
+    keywords: ["density", "dense", "heavy"]
   },
 
   {
@@ -147,6 +167,8 @@ const SearchSchema: SearchSchemaEntry[] = [
       "atomic number",
       "proton number",
       "proton",
+      "Z",
+      "number",
       "shell electrons"
     ],
 
@@ -157,7 +179,7 @@ const SearchSchema: SearchSchemaEntry[] = [
     type: "element_mp",
     keywords: [
       "melting point", "mp",
-      "melting","melt", 
+      "melting", "melt", 
       "freezing point", "fusion temperature",
       "softening point"
     ],
@@ -195,11 +217,16 @@ export function getIntendedArgumentCount(intentType: SearchAction) {
 // Also, this code is very disgusting, maybe refactor it sometime.
 export function getSearchExpression(table: PeriodicTableSchema, intent: SearchIntentEntry, elements: ParsedElement[]): SearchIntentExpression|null {
   switch (intent.type) {
-    case "atomic_number":
+    case "atomic_number": {
+      const el = table[elements[0].composition[0].id]!;
+
+      if (!el || el.type !== "element") return null;
+
       return {
-        action: `The atomic number of ${elements[0].raw} is`,
+        action: `The atomic number of ${el.symbol} is`,
         result: `${calculateAtomicNumber(table, elements).toFixed(0)}`
       }
+    }
 
     case "molar_mass":
       return {

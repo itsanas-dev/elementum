@@ -7,6 +7,10 @@
   animation: spinner-load 600ms linear infinite;
 }
 
+.text-muted {
+  color: var(--color-text-muted);
+}
+
 .ptable-wrapper {
   overflow-y: hidden;
   overflow-x: auto;

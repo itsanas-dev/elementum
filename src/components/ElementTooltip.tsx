@@ -32,7 +32,7 @@ export default function Tooltip({element, side, className, ...rest}: TooltipProp
         </div>
 
         <div className="tooltip-row">
-          <p className="tooltip-molarmass">{displayDecimal(element.atomic_mass)}</p>
+          <p className="tooltip-molarmass">{displayDecimal(element.atomic_mass)} g/mol</p>
           <p className="tooltip-configuration">{element.electron_configuration_semantic}</p>
         </div>
       </div>
