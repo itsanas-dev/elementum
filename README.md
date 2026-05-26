@@ -1,73 +1,61 @@
-# React + TypeScript + Vite
+<br />
+<div align="center">
+  <img src="images/logo.png" alt="logo" width="80" height="80">
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+  <h1 align="center">Elementum</h1>
 
-Currently, two official plugins are available:
+  <img src="https://img.shields.io/badge/LICENSE-GPL_v3-brightgreen?style=for-the-badge" />
+  <a href="https://github.com/itsanas-dev/elementum/issues"><img src="https://img.shields.io/github/issues/itsanas-dev/elementum?style=for-the-badge&color=%23ffde47
+  " /></a>
+  
+  <p style="margin-top: 1rem;">
+    An interactive, fast and lightweight Periodic Table for your needs.
+  </p>
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+  <a target="_blank" href="https://elementumapp.vercel.app"><strong>Visit the website</strong></a>
+</div>
 
-## React Compiler
+<!-- GETTING STARTED -->
+## Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+This is an example of how you may give instructions on setting up your project locally.
+To get a local copy up and running follow these simple example steps.
 
-## Expanding the ESLint configuration
+### Quick start
+Git clone the repository and install the dependencies
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Then, run the local website using npm dev
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm run dev
 ```
+
+Or if you want to build the project
+
+```sh
+npm run build
+npm run preview
+```
+
+<!-- CONTRIBUTING -->
+## Contributing
+
+Any contribution to features and issues you make are **greatly appreciated**.
+
+If you have a suggestion that you would like to make or you have encountered a bug, please fork the repo and create a pull request or issue thread.
+Don't forget to give the project a star! Thanks again!
+
+<!-- LICENSE -->
+## License
+
+Distributed under the [GNU GPL-v3 License](https://www.gnu.org/licenses/gpl-3.0.en.html#license-text). See [`LICENSE.txt`](https://github.com/itsanas-dev/elementum/blob/master/LICENSE) for more information.
+
+## Acknowledgments
+
+* [Periodic Table JSON](https://github.com/Bowserinator/Periodic-Table-JSON) - For the periodic table data
+* [Img Shields](https://shields.io) - For the shields
+* [Lucide icons](https://lucide.dev/) - For the icon pack used on the website.

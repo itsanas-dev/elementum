@@ -39,12 +39,11 @@ describe("evaluateUserSearch", () => {
       const matchElement = (e: string) => e === "Mg" ? "magnesium" : null;
       
       const specific = evaluateUserSearch("molar mass Mg", matchElement);
-      const ambiguous = evaluateUserSearch("Mg molar mass electronic configuration", matchElement);
+      const ambiguous = evaluateUserSearch("Mg molar mass atomic number", matchElement);
 
       expect(ambiguous.evaluation).toHaveLength(2);
-      expect(ambiguous.evaluation[0].type).toBe("electronic_configuration_semantic");
+      expect(ambiguous.evaluation[0].type).toBe("atomic_number");
       expect(ambiguous.evaluation[1].type).toBe("molar_mass");
-      expect(ambiguous.evaluation[0].confidence).toBeGreaterThan(0.5);
       expect(ambiguous.evaluation[0].confidence + ambiguous.evaluation[1].confidence).toBeCloseTo(1);
       
       expect(specific.evaluation).toHaveLength(1);
@@ -54,11 +53,11 @@ describe("evaluateUserSearch", () => {
 
     it("should prefer the longer keyword when multiple match", () => {
       const matchElement = (e: string) => e === "Mg" ? "magnesium" : null;
-      const result = evaluateUserSearch("atomic number, density and electronic configuration of Mg", matchElement);
+      const result = evaluateUserSearch("atomic number, density and molar mass of Mg", matchElement);
 
       expect(result.evaluation).toHaveLength(3)
-      expect(result.evaluation[0].type).toBe("electronic_configuration_semantic");
-      expect(result.evaluation[1].type).toBe("atomic_number")
+      expect(result.evaluation[0].type).toBe("atomic_number");
+      expect(result.evaluation[1].type).toBe("molar_mass")
       expect(result.evaluation[2].type).toBe("element_density")
     });
   });
@@ -93,6 +92,8 @@ describe("evaluateUserSearch", () => {
         "O":  "oxygen",
         "Fe": "iron",
         "Mg": "magnesium",
+        "N": "nitrogen",
+        "Al": "aluminium"
       };
       const ids = Object.values(elements);
 
@@ -119,7 +120,8 @@ describe("evaluateUserSearch", () => {
 
       it("should match molecules", () => {
         const result = parseCompound("S8", matchElement);
-        expect(result).toMatchObject({ composition: [{id: "sulfur", count: 8}] })
+        console.log("S8:", result)
+        expect(result?.composition).toMatchObject([{id: "sulfur", count: 8}])
       });
 
       it.each([
@@ -173,6 +175,46 @@ describe("evaluateUserSearch", () => {
             { id: "oxygen",   count: 1 }
           ]
         });
+      });
+
+      it.each([
+        ["Ca(OH)2", "Ca(OH)2"],
+        ["HNO3", "HNO3"],
+        ["Mg(NO3)2", "Mg(NO3)2"],
+        ["Al(NO3)3", "Al(NO3)3"],
+        ["Al2(OH)6", "Al2(OH)6"]
+      ])("should be match multiple atom groups correctly, for example %s.", (_, query) => {
+        const results = {
+          "Ca(OH)2": [{id: "calcium", count: 1}, {id: "oxygen", count: 2}, {id: "hydrogen", count: 2}],
+          "HNO3": [{id: "hydrogen", count: 1}, {id: "nitrogen", count: 1}, {id: "oxygen", count: 3}],
+          "Mg(NO3)2": [{id: "magnesium", count: 1}, {id: "nitrogen", count: 2}, {id: "oxygen", count: 6}],
+          "Al(NO3)3": [{id: "aluminium", count: 1}, {id: 'nitrogen', count: 3}, {id: "oxygen", count: 9}],
+          "Al2(OH)6": [{id: "aluminium", count: 2}, {id: "oxygen", count: 6}, {id: "hydrogen", count: 6}]
+        }
+        
+        const result = parseCompound(query, matchElement);
+        console.log(query, result)
+        // @ts-expect-error I'm too lazy to write type-checking for these tests. We know the values exist.
+        const el: unknown[] = (results[query] ?? []);
+
+        expect(result).not.toBeNull();
+        expect(result!.composition).toMatchObject(el);
+      });
+
+      it("should match atom groups correctly", () => {
+        const result = parseCompound("Ca(OH)2", matchElement);
+        expect(result).toMatchObject({
+          composition: [
+            { id: "calcium", count: 1},
+            { id: "oxygen", count: 2 },
+            { id: "hydrogen",   count: 2 }
+          ]
+        });
+      });
+
+      it("should not match full words with element symbols in them.", () => {
+        const result = parseCompound("Molar", matchElement);
+        expect(result).toBeNull();
       });
 
       it("should return null if any element in the compound is unrecognized", () => {

@@ -1,6 +1,6 @@
 import type { PeriodicTableSchema } from "@/types"
 import { calculateAtomicMass, calculateAtomicNumber, toCelsius } from "./periodicTable"
-import { displayDecimal } from "./string"
+import { displayDecimal, isDigit } from "./string"
 
 type ElementCompositionComponent = {
   id: string,
@@ -31,7 +31,7 @@ export type SearchSchemaEntry = {
   keywords: string[],
   params: {
     allowCompounds: boolean,
-    argumentCount: number // The minimum number of elements required for this action to be applicable
+    elementArgumentsAllowed: number // The minimum number of elements required for this action to be applicable
   },
 }
 
@@ -63,7 +63,7 @@ type SearchIntentExpression = {
 const SearchSchema: SearchSchemaEntry[] = [
   {
     type: "molar_mass",
-    params: {argumentCount: 1, allowCompounds: true},
+    params: {elementArgumentsAllowed: 1, allowCompounds: true},
     keywords: [
       "mr",
       "mass",
@@ -82,7 +82,7 @@ const SearchSchema: SearchSchemaEntry[] = [
 
   {
     type: "electronic_configuration_semantic",
-    params: {argumentCount: 1, allowCompounds: false},
+    params: {elementArgumentsAllowed: 1, allowCompounds: false},
     keywords: [
       "short electronic configuration",
       "shorthand electron",
@@ -103,7 +103,7 @@ const SearchSchema: SearchSchemaEntry[] = [
 
   {
     type: "electronic_configuration_full",
-    params: {argumentCount: 1, allowCompounds: false},
+    params: {elementArgumentsAllowed: 1, allowCompounds: false},
     keywords: [
       "full electronic configuration",
       "electronic configuration", 
@@ -123,7 +123,7 @@ const SearchSchema: SearchSchemaEntry[] = [
 
   {
     type: "element_density",
-    params: {argumentCount: 1, allowCompounds: false},
+    params: {elementArgumentsAllowed: 1, allowCompounds: false},
     keywords: ["density", "dense", "heavy"]
   },
 
@@ -135,7 +135,7 @@ const SearchSchema: SearchSchemaEntry[] = [
       "column",
       "valence electron number"
     ],
-    params: {argumentCount: 1, allowCompounds: false}
+    params: {elementArgumentsAllowed: 1, allowCompounds: false}
   },
 
   {
@@ -146,7 +146,7 @@ const SearchSchema: SearchSchemaEntry[] = [
       "shell number",
       "row" 
     ],
-    params: {argumentCount: 1, allowCompounds: false}
+    params: {elementArgumentsAllowed: 1, allowCompounds: false}
   },
 
   {
@@ -158,7 +158,7 @@ const SearchSchema: SearchSchemaEntry[] = [
       "state at rtp",
       "state at room temperature"
     ],
-    params: {argumentCount: 1, allowCompounds: false} /// Unfortunately, we don't have physical state info on compounds.
+    params: {elementArgumentsAllowed: 1, allowCompounds: false} /// Unfortunately, we don't have physical state info on compounds.
   },
   
   {
@@ -172,7 +172,7 @@ const SearchSchema: SearchSchemaEntry[] = [
       "shell electrons"
     ],
 
-    params: {argumentCount: 1, allowCompounds: false}
+    params: {elementArgumentsAllowed: 1, allowCompounds: false}
   },
 
   {
@@ -184,7 +184,7 @@ const SearchSchema: SearchSchemaEntry[] = [
       "softening point"
     ],
 
-    params: {argumentCount: 1, allowCompounds: false}
+    params: {elementArgumentsAllowed: 1, allowCompounds: false}
   },
 
   {
@@ -194,7 +194,7 @@ const SearchSchema: SearchSchemaEntry[] = [
       "vaporization", "vapourization", "vapourization point",
       "point of formation of vapour"
     ],
-    params: {argumentCount: 1, allowCompounds: false}
+    params: {elementArgumentsAllowed: 1, allowCompounds: false}
   }
 ] as const
 
@@ -209,7 +209,7 @@ export function getIntendedArgumentCount(intentType: SearchAction) {
 
   if (!entry) return -1;
 
-  return entry.params.argumentCount;
+  return entry.params.elementArgumentsAllowed;
 }
 
 // Type-checking here is sparse because we can be reasonably sure that the elements do exist for the
@@ -332,40 +332,79 @@ function parseElement(word: string, validate?: (symbolOrName: string) => string 
   return id ? {raw: word, type: "molecule", composition: [{id, count: 1}]} : null
 }
 
-export function parseCompound(word: string, validate?: (symbolOrName: string) => string | null): ParsedElement|null {  
+export function parseCompound(
+  word: string,
+  validate?: (symbolOrName: string) => string | null
+): ParsedElement | null {
   if (!validate) return null;
 
+  console.log(word)
+
+  word = word.replace(/\s/g, "");
+  if (!word || !/^[A-Za-z0-9()]+$/.test(word)) return null;
+
+  
+  // First check if the word itself can be an element.
+  // Before checking for compounds. This matches words like "Ca", "calcium" and others.
   const potentialElement = parseElement(word, validate);
-
   if (potentialElement) return potentialElement;
-  
-  // Strict symbol length check. Something like "Mo" in "Molar" shouldn't match.
-  if (word.length > 3 && !/^([A-Z][a-z]?\d*)+$/.test(word)) return null;
-  
-  const tokens = word.match(/[A-Z][a-z]?\d*/g);
 
-  if (!tokens) return null;
+  let i = 0;
 
-  const composition: ElementCompositionComponent[] = [];
-  
-  for (const token of tokens) {
-    const symbol = token.replace(/\d+/g, "");
-    const count = parseInt(token.match(/\d+/)?.[0] ?? "1");
+  function parse(): ElementCompositionComponent[] | null {
+    const result: ElementCompositionComponent[] = [];
 
-    const element = validate(symbol);
+    while (i < word.length && word[i] !== ')') {
+      if (word[i] === '(') {
+        i++; // skip '('
+        
+        const group = parse();
+        if (!group) return null;
 
-    if (!element) return null;
+        i++; // skip ')'
 
-    composition.push({id: element, count})
+        let n = '';
+
+        while (i < word.length && isDigit(word[i])) n += word[i++];
+        
+        const mult = n ? parseInt(n) : 1;
+
+        for (const entry of group) {
+          result.push({ id: entry.id, count: entry.count * mult });
+        }
+
+        continue;
+      }
+
+      if (/[A-Z]/.test(word[i])) {
+        let symbol = word[i++];
+        while (i < word.length && /[a-z]/.test(word[i])) symbol += word[i++];
+
+        let n = '';
+        while (i < word.length && isDigit(word[i])) n += word[i++];
+        const count = n ? parseInt(n) : 1;
+
+        const el = validate!(symbol);
+        if (!el) return null;
+
+        result.push({ id: el, count });
+        continue;
+      }
+
+      return null; // Character which is not alphabetical, numerical or brackets i.e invalid.
+    }
+
+    return result;
   }
 
-  if (composition.length === 0) return null;
+  const composition = parse();
+  if (!composition?.length) return null;
 
   return {
-    raw: word,
     type: composition.length === 1 ? "molecule" : "compound",
-    composition
-  }
+    composition,
+    raw: word
+  };
 }
 
 export function evaluateUserSearch(rawQuery: string, validate?: (potentialElement: string) => string|null): SearchIntent {
@@ -384,14 +423,13 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
     const compound = parseCompound(word, validate)
 
     if (compound) {
-      hasCompounds = compound.type === "compound";
+      hasCompounds = (hasCompounds || compound.type === "compound");
       elementMap.push(compound);
 
-      continue;
+      continue
     }
-
+    
     const sanitized = word.toLowerCase().replace(/[^a-z0-9]/g, "");
-
     if (sanitized.length > 0) filteredWords.push(sanitized);
   }
 
@@ -443,10 +481,10 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
     }
 
     // Skip this entry if the elements are too few.
-    if (entry.params.argumentCount > elementMap.length) {
+    if (entry.params.elementArgumentsAllowed > elementMap.length) {
       warnings.push({
         kind: "argument_mismatch",
-        expected: entry.params.argumentCount,
+        expected: entry.params.elementArgumentsAllowed,
         received: elementMap.length,
         name: entry.type
       });
