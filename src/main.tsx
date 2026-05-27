@@ -2,11 +2,16 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import '@/assets/css/index.css'
 import App from '@/App'
+import ThemeProvider from './components/provider/ThemeProvider'
+import ConfigProvider from './components/provider/ConfigProvider'
 
 const app = createRoot(document.getElementById('app')!)
 
 app.render(
   <StrictMode>
-    <App />
+    <ConfigProvider>
+      <ThemeProvider />
+      <App />
+    </ConfigProvider>
   </StrictMode>,
 )

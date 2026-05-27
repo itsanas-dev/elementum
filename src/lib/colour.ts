@@ -28,5 +28,5 @@ export function getTextColour(hex: string): string {
   }
 
   const luminance = (0.2126 * linearize(color.r) + 0.7152 * linearize(color.g) + 0.0722 * linearize(color.b));
-  return luminance > 0.325 ? TEXT_COLOUR_LIGHT : TEXT_COLOUR_DARK;
+  return luminance > 0.48 ? TEXT_COLOUR_LIGHT : TEXT_COLOUR_DARK;
 }

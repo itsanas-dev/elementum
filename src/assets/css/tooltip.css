@@ -20,6 +20,10 @@
   z-index: 99;
 }
 
+:root[data-theme="light"] .tooltip {
+  box-shadow: 0 6px 8px -1px rgb(24 24 24 / 0.1), 0 2px 4px -2px rgb(24 24 24 / 0.1);
+}
+
 /* Tooltip chevron */
 .tooltip::before {
   content: '';

@@ -1,9 +1,10 @@
 import { getTextColour } from "@/lib/colour"
 import { getEntryColour } from "@/lib/periodicTable"
 import { displayDecimal } from "@/lib/string"
+import { ConfigContext } from "@/provider/ConfigContext"
 import type { TableElement } from "@/types"
 import clsx from "clsx"
-import React, { type CSSProperties, type JSX, type MouseEvent } from "react"
+import React, { useContext, type CSSProperties, type JSX, type MouseEvent } from "react"
 
 type ElementBlockComponentProps = Omit<JSX.IntrinsicElements["button"], "onClick"> & {
   element: TableElement,
@@ -11,7 +12,8 @@ type ElementBlockComponentProps = Omit<JSX.IntrinsicElements["button"], "onClick
 }
 
 function ElementBlockComponent({ element, onClick, className, ...rest }: ElementBlockComponentProps) {
-  const colour = getEntryColour(element);
+  const {theme} = useContext(ConfigContext);
+  const colour = getEntryColour(theme, element);
   const textColour = getTextColour(colour);
   const style = {"--main-color": colour, "--text-color": textColour, gridColumn: element.xpos, gridRow: element.ypos} as CSSProperties;
 
@@ -29,8 +31,8 @@ function ElementBlockComponent({ element, onClick, className, ...rest }: Element
         <span className="element-symbol" aria-hidden>{element.symbol}</span>
         <span className="entry-name" aria-hidden>{element.name}</span>
       
-        <span className="label-atomic-number text-muted" aria-hidden>{element.number.toFixed(0)}</span>
-        <span className="label-atomic-mass text-muted" aria-hidden>{displayDecimal(element.atomic_mass)}</span>
+        <span className="text-muted label-atomic-number" aria-hidden>{element.number.toFixed(0)}</span>
+        <span className="text-muted label-atomic-mass" aria-hidden>{displayDecimal(element.atomic_mass)}</span>
       </button>
     </>
   )

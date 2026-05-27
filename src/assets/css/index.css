@@ -7,6 +7,23 @@
   --color-input-placeholder: #8a8b8a;
   --color-input-border: #64646466;
   --color-searchentry-hover: rgba(220, 220, 220, 0.05);
+  --color-searchentry-click: rgba(220, 220, 220, 0.09);
+  --color-iconbutton-hover: rgba(210, 210, 210, 0.06);
+  --color-iconbutton-click: rgba(210, 210, 210, 0.09);
+}
+
+:root[data-theme="light"] {
+  --color-text-muted: #474949;
+  --color-tooltip-bg: #f6f6f6;
+  --color-input-background: #f6f6f6;
+  --color-input-placeholder: #3f3e4a;
+  --color-input-border: #5a575b55;
+  --color-br-separator: #9b9a9f76;
+  
+  --color-searchentry-hover: rgba(50, 50, 50, 0.05);
+  --color-searchentry-click: rgba(50, 50, 50, 0.08);
+  --color-iconbutton-hover: rgba(50, 50, 50, 0.05);
+  --color-iconbutton-click: rgba(50, 50, 50, 0.08);
 }
 
 html {
@@ -29,8 +46,14 @@ body, main {
 
 button, input, body, label {
   font-family: var(--font-family);
+  color: var(--color-text);
 }
 
 h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
+}
+
+::view-transition-old(root), ::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }

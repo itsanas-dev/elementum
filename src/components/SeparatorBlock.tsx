@@ -1,17 +1,22 @@
+import { getTextColour } from "@/lib/colour";
 import { getEntryColour } from "@/lib/periodicTable"
+import { ConfigContext } from "@/provider/ConfigContext";
 import type { TableSeparator } from "@/types"
+import { useContext } from "react";
 
 type SeparatorBlockComponentProps = {
   separator: TableSeparator
 }
 
 export default function SeparatorBlock({separator}: SeparatorBlockComponentProps) {
+  const {theme} = useContext(ConfigContext);
+  const colour = getEntryColour(theme, separator);
 
   return (
     <button 
       data-entry-type="element-group" 
       role="gridcell" 
-      style={{borderColor: getEntryColour(separator), gridColumn: separator.xpos, gridRow: separator.ypos}} 
+      style={{borderColor: colour, gridColumn: separator.xpos, gridRow: separator.ypos}} 
       className="table-entry" 
       aria-label={`${separator.name}, which range from atomic number ${separator.range[0]} to ${separator.range[1]}.`}
     >

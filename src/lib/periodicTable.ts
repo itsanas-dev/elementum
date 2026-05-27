@@ -1,36 +1,24 @@
-import { type PeriodicTableSchema, type TableEntry } from "@/types";
+import { type AppTheme, type PeriodicTableSchema, type TableEntry } from "@/types";
 import type { ParsedElement } from "./search";
+import { AppThemes } from "./theme";
 
-const HALOGEN_COLOUR = "#be61af";
-const NOBLE_GAS_COLOUR = "#a452c2";
+export function getEntryColour(theme: AppTheme, element: TableEntry) {
+  const themeDef = AppThemes[theme] ?? AppThemes["dark"];
 
-const CATEGORY_COLOURS: Record<string, string> = {
-  "metalloid": "#55b7bb",
-  "transition metal": "#caa411",
-  "alkali metal": "#c45164",
-  "alkaline earth metal": "#cd8028",
-  "nonmetal": "#3a7fd5"
-}
-
-export function getEntryColour(element: TableEntry) {
   if (element.type === "separation") {
-    return "#8cb8c6";
+    return themeDef.seriesBlock;
   }
 
-  if (element.group === 17) return HALOGEN_COLOUR;
-  if (element.group === 18) return NOBLE_GAS_COLOUR;
+  if (element.group === 1) return themeDef.alkaliMetal;
+  if (element.group === 2) return themeDef.alkaliEarth;
+  if (element.group === 17) return themeDef.halogen;
+  if (element.group === 18) return themeDef.nobleGas;
+  if (element.category === "transition metal") return themeDef.transitionMetal;
+  if (element.category === "metalloid") return themeDef.metalloid;
+  if (element.category.includes("nonmetal")) return themeDef.nonMetal;
+  if (element.category.includes("post-transition metal")) return themeDef.postTransitionMetal;
 
-  if (element.category.includes("post-transition metal")) {
-    return "#93ad37";
-  }
-
-  for (const entry of Object.keys(CATEGORY_COLOURS)) {
-    if (element.category.includes(entry)) {
-      return CATEGORY_COLOURS[entry]
-    }
-  }
-
-  return "#FFF";
+  return themeDef.unknown;
 }
 
 export function calculateAtomicMass(table: PeriodicTableSchema, parsed: ParsedElement[]) {

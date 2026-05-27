@@ -59,3 +59,7 @@ export type TooltipPosition = {
   side: "right" | "left" | "top" | "bottom",
   position: {x: number, y: number}
 }
+
+export type AppTheme = "dark" | "light";
+export type TemperatureUnit = "celsius" | "kelvin" | "fahrenheit"
+export type DensityUnit = "g_cm3" | "kg_m3"

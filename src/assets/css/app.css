@@ -11,6 +11,50 @@
   color: var(--color-text-muted);
 }
 
+.top-bar {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  left: 0;
+  width: 100%;
+  top: 1.75rem;
+
+  z-index: 99;
+}
+
+.toolbar {
+  display: flex;
+  flex-direction: row;
+  align-self: flex-end;
+  align-items: center;
+  margin-right: 1.5rem;
+
+  gap: 0.5rem;
+}
+
+.icon-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 0;
+  outline: none;
+  background: transparent;
+
+  cursor: pointer;
+  border-radius: 100%;
+  width: 100%;
+  padding: 0.5rem;
+}
+
+.icon-button:focus-visible, .icon-button:hover {
+  background-color: var(--color-iconbutton-hover);
+}
+
+.icon-button:active {
+  background-color: var(--color-iconbutton-click);
+}
+
 .ptable-wrapper {
   overflow-y: hidden;
   overflow-x: auto;
@@ -57,6 +101,18 @@
   background-color: var(--main-color);
   color: var(--text-color);
   z-index: 2;
+}
+
+.table-entry[data-entry-type="element"]:hover .label-atomic-mass, 
+  .table-entry[data-entry-type="element"]:focus-visible .label-atomic-mass
+{
+  color: var(--text-color);
+}
+
+.table-entry[data-entry-type="element"]:hover .label-atomic-number, 
+  .table-entry[data-entry-type="element"]:focus-visible .label-atomic-number
+{
+  color: var(--text-color);
 }
 
 .label-atomic-mass {
@@ -129,6 +185,18 @@
 
   .label-atomic-number {
     transform: translate(0.125rem, 0.125rem);
+  }
+}
+
+@media screen and (max-width: 620px) {
+  .top-bar {
+    top: 1.5rem;
+  }
+}
+
+@media screen and (max-width: 450px) {
+  .toolbar {
+    flex-direction: column;
   }
 }
 

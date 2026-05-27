@@ -4,7 +4,7 @@ import React, { useCallback, useContext, useId, useMemo, useRef, useState, type 
 import "@/assets/css/searchbox.css"
 import { evaluateUserSearch, getSearchExpression, type ParsedElement, type SearchIntent, type SearchIntentEntry } from "@/lib/search"
 import LoadingFallback from "./fallback/LoadingFallback"
-import { PeriodicTableProvider } from "@/provider/PeriodicTableProvider"
+import { PeriodicTableContext } from "@/provider/PeriodicTableContext"
 
 type SearchboxStatus = {
   focused: boolean,
@@ -18,7 +18,7 @@ type SearchboxEntryProps = {
 }
 
 const SearchboxEntry = React.memo(({ intentEntry, elements }: SearchboxEntryProps) => {
-  const {elementTable} = useContext(PeriodicTableProvider);
+  const {elementTable} = useContext(PeriodicTableContext);
   const evaluation = useMemo(() => getSearchExpression(elementTable!, intentEntry, elements), [])
   
   if (!evaluation) return null;
@@ -26,7 +26,7 @@ const SearchboxEntry = React.memo(({ intentEntry, elements }: SearchboxEntryProp
   return (
     <button aria-label={`${evaluation.action} ${evaluation.result}`} className="searchbox-entry-wrapper">
       {/* TODO: Add a more robust way of setting the icon, preferably in the configuration of the search actions. */}
-      {intentEntry.type === "unknown" ? <CircleQuestionMark size={20} /> : <EqualIcon size={20} aria-hidden />}
+      {intentEntry.type === "unknown" ? <CircleQuestionMark className="icon-noshrink" size={20} /> : <EqualIcon className="icon-noshrink" size={20} aria-hidden />}
       <div className="searchbox-entry" aria-hidden>
         {
           (evaluation.action && evaluation.action.length > 0) && 
@@ -44,7 +44,7 @@ const SearchboxEntry = React.memo(({ intentEntry, elements }: SearchboxEntryProp
 })
 
 export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["input"]) {
-  const { elementTable, elementSymbolLookup } = useContext(PeriodicTableProvider);
+  const { elementTable, elementSymbolLookup } = useContext(PeriodicTableContext);
   const [searchboxState, setSearchboxState] = useState<SearchboxStatus>({focused: false, query: null, status: "empty"});
   const searchTimeoutRef = useRef<number>(-1);
   const searchboxRef = useRef<HTMLDivElement>(null);
@@ -127,7 +127,7 @@ export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["
       onFocus={onFocus}
       onBlur={onBlur}
     >
-      <Search className="search-icon" aria-hidden size={16} />
+      <Search className="icon-noshrink" aria-hidden size={16} />
       <input 
         className={clsx("searchbox", className)}
         role="searchbox" 
