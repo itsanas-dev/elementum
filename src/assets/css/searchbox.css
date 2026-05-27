@@ -87,6 +87,7 @@
   flex-direction: column;
   justify-content: start;
   align-items: start;
+  text-align: left;
 }
 
 .searchbox-result {

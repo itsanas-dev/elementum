@@ -1,10 +1,17 @@
-import type { PeriodicTableSchema } from "@/types"
-import { calculateAtomicMass, calculateAtomicNumber, toCelsius } from "./periodicTable"
+import type { Config, PeriodicTableSchema, TableElement } from "@/types"
+import { calculateAtomicMass, constructMolecularFormula, flattenComposition, gcd, getDensityByConfig, getTemperatureByConfig } from "./periodicTable"
 import { displayDecimal, isDigit } from "./string"
 
-type ElementCompositionComponent = {
+export type Atom = {
   id: string,
   count: number
+}
+
+export type ElementCompositionComponent = {
+  type: "element" | "atom_group",
+
+  components: Atom[],
+  atomGroupCount: number
 }
 
 /// Contains ids to the element entries themselves.
@@ -24,14 +31,18 @@ export type SearchAction = "unknown" |
                            "element_group" |
                            "element_phase" |
                            "element_mp" |
-                           "element_bp"
+                           "element_bp" |
+                           "element_electronaffinity" |
+                           "element_appearance" |
+                           "electronegativity" |
+                           "empirical_formula"
 
 export type SearchSchemaEntry = {
   type: SearchAction,
   keywords: string[],
   params: {
     allowCompounds: boolean,
-    elementArgumentsAllowed: number // The minimum number of elements required for this action to be applicable
+    minElementArguments: number // The minimum number of elements required for this action to be applicable
   },
 }
 
@@ -63,7 +74,7 @@ type SearchIntentExpression = {
 const SearchSchema: SearchSchemaEntry[] = [
   {
     type: "molar_mass",
-    params: {elementArgumentsAllowed: 1, allowCompounds: true},
+    params: {minElementArguments: 1, allowCompounds: true},
     keywords: [
       "mr",
       "mass",
@@ -76,13 +87,13 @@ const SearchSchema: SearchSchemaEntry[] = [
       "relative molecular mass", 
       "relative formula mass", 
       "atomic weight",
-      "A"
+      "a" /// Meant to be 'A' as in the prefix of atomic number, but it has to be lowercase.
     ]
   },
 
   {
     type: "electronic_configuration_semantic",
-    params: {elementArgumentsAllowed: 1, allowCompounds: false},
+    params: {minElementArguments: 1, allowCompounds: false},
     keywords: [
       "short electronic configuration",
       "shorthand electron",
@@ -93,6 +104,7 @@ const SearchSchema: SearchSchemaEntry[] = [
       "electron arrangement",
       "electronic",
       "electron",
+      "electrons",
       "configuration",
       "electron configuration",
       "orbital configuration",
@@ -103,7 +115,7 @@ const SearchSchema: SearchSchemaEntry[] = [
 
   {
     type: "electronic_configuration_full",
-    params: {elementArgumentsAllowed: 1, allowCompounds: false},
+    params: {minElementArguments: 1, allowCompounds: false},
     keywords: [
       "full electronic configuration",
       "electronic configuration", 
@@ -111,6 +123,7 @@ const SearchSchema: SearchSchemaEntry[] = [
       "electron arrangement",
       "electronic",
       "electron",
+      "electrons",
       "configuration",
       "electron configuration",
       "full orbital configuration",
@@ -123,7 +136,7 @@ const SearchSchema: SearchSchemaEntry[] = [
 
   {
     type: "element_density",
-    params: {elementArgumentsAllowed: 1, allowCompounds: false},
+    params: {minElementArguments: 1, allowCompounds: false},
     keywords: ["density", "dense", "heavy"]
   },
 
@@ -135,7 +148,7 @@ const SearchSchema: SearchSchemaEntry[] = [
       "column",
       "valence electron number"
     ],
-    params: {elementArgumentsAllowed: 1, allowCompounds: false}
+    params: {minElementArguments: 1, allowCompounds: false}
   },
 
   {
@@ -146,7 +159,7 @@ const SearchSchema: SearchSchemaEntry[] = [
       "shell number",
       "row" 
     ],
-    params: {elementArgumentsAllowed: 1, allowCompounds: false}
+    params: {minElementArguments: 1, allowCompounds: false}
   },
 
   {
@@ -158,7 +171,7 @@ const SearchSchema: SearchSchemaEntry[] = [
       "state at rtp",
       "state at room temperature"
     ],
-    params: {elementArgumentsAllowed: 1, allowCompounds: false} /// Unfortunately, we don't have physical state info on compounds.
+    params: {minElementArguments: 1, allowCompounds: false} /// Unfortunately, we don't have physical state info on compounds.
   },
   
   {
@@ -167,12 +180,12 @@ const SearchSchema: SearchSchemaEntry[] = [
       "atomic number",
       "proton number",
       "proton",
-      "Z",
+      "z", /// Meant to be 'Z' as in the acronym for atomic number, but it's meant to be lowercase
       "number",
       "shell electrons"
     ],
 
-    params: {elementArgumentsAllowed: 1, allowCompounds: false}
+    params: {minElementArguments: 1, allowCompounds: false}
   },
 
   {
@@ -184,7 +197,7 @@ const SearchSchema: SearchSchemaEntry[] = [
       "softening point"
     ],
 
-    params: {elementArgumentsAllowed: 1, allowCompounds: false}
+    params: {minElementArguments: 1, allowCompounds: false}
   },
 
   {
@@ -194,7 +207,46 @@ const SearchSchema: SearchSchemaEntry[] = [
       "vaporization", "vapourization", "vapourization point",
       "point of formation of vapour"
     ],
-    params: {elementArgumentsAllowed: 1, allowCompounds: false}
+    params: {minElementArguments: 1, allowCompounds: false}
+  },
+
+  {
+    type: "element_appearance",
+    keywords: [
+      "appearance", "look", "looks", "appear"
+    ],
+    params: {minElementArguments: 1, allowCompounds: false}
+  },
+  
+  {
+    type: "element_electronaffinity",
+    keywords: [
+      "electron affinity", "electroaffinity", "affinity",
+      "e- affinity", "e-affinity"
+    ],
+
+    params: {minElementArguments: 1, allowCompounds: false}
+  },
+
+  {
+    type: "electronegativity",
+    keywords: [
+      "electronegativity", "en", "electronegativity difference",
+      "en difference", "en diff", "electronegativity diff"
+    ],
+
+    params: {minElementArguments: 1, allowCompounds: false}
+  },
+
+  {
+    type: "empirical_formula",
+    keywords: [
+      "empirical formula", "emp formula", "empirical",
+      "simplest formula", "compositional formula", "stoichometric formula",
+      "compositional", "stoichometric"
+    ],
+
+    params: {minElementArguments: 1, allowCompounds: true}
   }
 ] as const
 
@@ -204,29 +256,49 @@ const SearchStopWords = new Set([
   "were", "was", "there"
 ]);
 
+function getNthElement(list: ParsedElement[], n: number) {
+  if (n >= list.length) return null;
+
+  const el = list[n];
+
+  if (el.type === "compound") return null;
+  if (el.composition.length === 0) return null;
+  if (el.composition[0].components.length === 0) return null;
+
+  return el.composition[0].components[0]
+}
+
 export function getIntendedArgumentCount(intentType: SearchAction) {
   const entry = SearchSchema.find((i) => i.type === intentType);
 
   if (!entry) return -1;
 
-  return entry.params.elementArgumentsAllowed;
+  return entry.params.minElementArguments;
+}
+
+function displayElementAttribute(table: PeriodicTableSchema, elements: ParsedElement[], attributeText: (el: TableElement) => string, responseText: (el: TableElement) => string, elementIndex: number = 0) {
+  const el = table[getNthElement(elements, elementIndex)!.id]!;
+
+  if (el.type !== "element") return null
+
+  return {action: attributeText(el), result: responseText(el) }
 }
 
 // Type-checking here is sparse because we can be reasonably sure that the elements do exist for the
 // action we are performing since it's filtered out in the search algorithm.
 // Also, this code is very disgusting, maybe refactor it sometime.
-export function getSearchExpression(table: PeriodicTableSchema, intent: SearchIntentEntry, elements: ParsedElement[]): SearchIntentExpression|null {
+export function getSearchExpression(
+  table: PeriodicTableSchema, 
+  intent: SearchIntentEntry, 
+  elements: ParsedElement[],
+  config: Config
+): SearchIntentExpression|null {
   switch (intent.type) {
-    case "atomic_number": {
-      const el = table[elements[0].composition[0].id]!;
-
-      if (!el || el.type !== "element") return null;
-
-      return {
-        action: `The atomic number of ${el.symbol} is`,
-        result: `${calculateAtomicNumber(table, elements).toFixed(0)}`
-      }
-    }
+    case "atomic_number": 
+      return displayElementAttribute(table, elements, 
+        (el) => `The atomic number of ${el.symbol} is`,
+        (el) => el.number.toFixed(0)
+      )
 
     case "molar_mass":
       return {
@@ -234,82 +306,98 @@ export function getSearchExpression(table: PeriodicTableSchema, intent: SearchIn
         result: `${displayDecimal(calculateAtomicMass(table, elements))} g/mol`
       }
       
-    case "element_density": {
-      const el = table[elements[0].composition[0].id]!;
-
-      if (el.type === "separation") return null
-
-      const result = el.density ? `${displayDecimal(el.density)} g/cm3` : "Unknown"
-
-      return {action: `The density of ${el.symbol} is`, result}
-    }
+    case "element_density":
+      return displayElementAttribute(table, elements, 
+        (el) => `The density of ${el.symbol} is`,
+        (el) => el.density ? getDensityByConfig(el.density, config.preferredDensityUnit) : "Unknown"
+      );
 
     case "electronic_configuration_semantic":
-    case "electronic_configuration_full": {
-      const el = table[elements[0].composition[0].id]!;
+    case "electronic_configuration_full": 
+      return displayElementAttribute(table, elements, 
+        (el) => `The electronic configuration of ${el.symbol} is`,
+        (el) => (intent.type === "electronic_configuration_full") ? el.electron_configuration : el.electron_configuration_semantic
+      )
 
-      if (el.type === "separation") return null;
+    case "element_group":
+      return displayElementAttribute(table, elements,
+        (el) => `The group of ${el.symbol} is`,
+        (el) => `Group ${el.group}`
+      )
 
-      const configuration = intent.type === "electronic_configuration_semantic" ? el.electron_configuration_semantic : el.electron_configuration
-      return {action: `The electronic configuration of ${el.symbol} is`, result: configuration}
-    }
+    case "element_period":
+      return displayElementAttribute(table, elements,
+        (el) => `The period of ${el.symbol} is`,
+        (el) => `Period ${el.period}`
+      )
 
-    case "element_group": {
-      const el = table[elements[0].composition[0].id]!;
+    case "element_phase":
+      return displayElementAttribute(table, elements,
+        (el) => `The physical state (at r.t.p) of ${el.symbol} is`,
+        (el) => `${el.phase}`
+      )
 
-      if (el.type === "separation") return null;
-      
-      return {action: `The group of ${el.symbol} is`, result: `Group ${el.group}`}
-    }
+    case "element_mp":
+      return displayElementAttribute(table, elements,
+        (el) => `The melting point of ${el.symbol} is`,
+        (el) => el.melt ? getTemperatureByConfig(el.melt, config.preferredTemperatureUnit) : "Unknown"
+      )
 
-    case "element_period": {
-      const el = table[elements[0].composition[0].id]!;
+    case "element_bp":
+      return displayElementAttribute(table, elements,
+        (el) => `The boiling point of ${el.symbol} is`,
+        (el) => el.boil ? getTemperatureByConfig(el.boil, config.preferredTemperatureUnit) : "Unknown"
+      )
+    
+    case "element_appearance":
+      return displayElementAttribute(table, elements,
+        (el) => `The appearance of ${el.symbol} is`,
+        (el) => el.appearance || "Unknown"
+      )
 
-      if (el.type === "separation") return null;
+    case "element_electronaffinity":
+      return displayElementAttribute(table, elements,
+        (el) => `The electron affinity of ${el.symbol} is`,
+        (el) => `${el.electron_affinity.toFixed(2)} kJ/mol`
+      )
 
-      return {action: `The period of ${el.symbol} is`, result: `Period ${el.period}`}
-    }
+    case "electronegativity":
+      return displayElementAttribute(table, elements, 
+        (el) => `The electronegativity of ${el.symbol} is`,
+        (el) => `${el.electronegativity_pauling}`
+      )
 
-    case "element_phase": {
-      const el = table[elements[0].composition[0].id]!;
+    /// Most impressive routine I have written.
+    /// Very proud of this one.
+    case "empirical_formula": {
+      const element = elements[0];
+      const atoms = flattenComposition(element);
 
-      if (el.type === "separation") return null;
+      if (atoms.length === 0) return null;
 
-      return {action: `The physical state (at r.t.p) of ${el.symbol} is`, result: el.phase}
-    }
+      const coefficients = atoms.map((a) => {
+        return a.count;
+      });
 
-    // F for americans
-    // TODO: add support for freedom units at some point, preferably from a config.
-    case "element_mp": {
-      const el = table[elements[0].composition[0].id]!;
+      const gcdFactor = gcd(coefficients);
 
-      if (el.type === "separation") return null;
+      const composition: ElementCompositionComponent[] = atoms.map((a) => {
+        return {type: "element", components: [{id: a.id, count: a.count / gcdFactor}], atomGroupCount: 1}
+      });
 
-      const result = el.melt ? `${el.melt.toFixed(1)} K (${toCelsius(el.melt).toFixed(1)} °C)` : "Unknown"
+      const empiricalFormula = constructMolecularFormula(table, composition);
+
+      if (!empiricalFormula) return null;
 
       return {
-        action: `The melting point of ${el.symbol} is`, 
-        result
+        action: `The empirical formula of ${element.raw} is`,
+        result: empiricalFormula
       }
     }
-
-    case "element_bp": {
-      const el = table[elements[0].composition[0].id]!;
-
-      if (el.type === "separation") return null;
-
-      const result = el.boil ? `${el.boil.toFixed(1)} K (${toCelsius(el.boil).toFixed(1)} °C)` : "Unknown"
-
-      return {
-        action: `The boiling point of ${el.symbol} is`, 
-        result
-      }
-    }
-
     case "unknown":
-      return {result: "Waiting for something to happen?", action: "Your search was too vague."}
+      return {result: "Waiting for something to happen?", action: "Your search was too vague. Please try again."}
     default:
-      return {action: "Oops", result: `Unsupported operation "${intent.type}"`}
+      return {result: "Oops, we have messed up somewhere.", action: `Unsupported operation "${intent.type}"`}
   }
 }
 
@@ -329,7 +417,7 @@ function parseElement(word: string, validate?: (symbolOrName: string) => string 
   /// Note: We don't have any compound names so we don't care if that may exist.
   const id = validate?.(word);
 
-  return id ? {raw: word, type: "molecule", composition: [{id, count: 1}]} : null
+  return id ? {raw: word, type: "molecule", composition: [{type: "element", components: [{id, count: 1}], atomGroupCount: 1}]} : null
 }
 
 export function parseCompound(
@@ -338,11 +426,8 @@ export function parseCompound(
 ): ParsedElement | null {
   if (!validate) return null;
 
-  console.log(word)
-
   word = word.replace(/\s/g, "");
   if (!word || !/^[A-Za-z0-9()]+$/.test(word)) return null;
-
   
   // First check if the word itself can be an element.
   // Before checking for compounds. This matches words like "Ca", "calcium" and others.
@@ -369,9 +454,15 @@ export function parseCompound(
         
         const mult = n ? parseInt(n) : 1;
 
-        for (const entry of group) {
-          result.push({ id: entry.id, count: entry.count * mult });
-        }
+        result.push({
+          type: "atom_group",
+          components: group.flatMap(entry => 
+            entry.type === "atom_group"
+              ? entry.components.map((c) => ({id: c.id, count: c.count}))
+              : [{id: entry.components[0].id, count: entry.components[0].count}]
+          ),
+          atomGroupCount: mult
+        })
 
         continue;
       }
@@ -387,7 +478,11 @@ export function parseCompound(
         const el = validate!(symbol);
         if (!el) return null;
 
-        result.push({ id: el, count });
+        result.push({
+          type: "element",
+          components: [{id: el, count}],
+          atomGroupCount: 1
+        })
         continue;
       }
 
@@ -398,6 +493,7 @@ export function parseCompound(
   }
 
   const composition = parse();
+  console.log(composition)
   if (!composition?.length) return null;
 
   return {
@@ -481,10 +577,10 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
     }
 
     // Skip this entry if the elements are too few.
-    if (entry.params.elementArgumentsAllowed > elementMap.length) {
+    if (entry.params.minElementArguments > elementMap.length) {
       warnings.push({
         kind: "argument_mismatch",
-        expected: entry.params.elementArgumentsAllowed,
+        expected: entry.params.minElementArguments,
         received: elementMap.length,
         name: entry.type
       });

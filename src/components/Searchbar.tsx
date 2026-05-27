@@ -5,6 +5,7 @@ import "@/assets/css/searchbox.css"
 import { evaluateUserSearch, getSearchExpression, type ParsedElement, type SearchIntent, type SearchIntentEntry } from "@/lib/search"
 import LoadingFallback from "./fallback/LoadingFallback"
 import { PeriodicTableContext } from "@/provider/PeriodicTableContext"
+import { ConfigContext } from "@/provider/ConfigContext"
 
 type SearchboxStatus = {
   focused: boolean,
@@ -19,7 +20,8 @@ type SearchboxEntryProps = {
 
 const SearchboxEntry = React.memo(({ intentEntry, elements }: SearchboxEntryProps) => {
   const {elementTable} = useContext(PeriodicTableContext);
-  const evaluation = useMemo(() => getSearchExpression(elementTable!, intentEntry, elements), [])
+  const { preferredDensityUnit, preferredTemperatureUnit } = useContext(ConfigContext);
+  const evaluation = useMemo(() => getSearchExpression(elementTable!, intentEntry, elements, {preferredDensityUnit, preferredTemperatureUnit}), [preferredDensityUnit, preferredTemperatureUnit])
   
   if (!evaluation) return null;
 

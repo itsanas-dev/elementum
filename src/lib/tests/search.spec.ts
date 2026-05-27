@@ -101,27 +101,45 @@ describe("evaluateUserSearch", () => {
 
       return elements[e] ?? null;
     };
-
+    
     describe("single elements", () => {
       it("should recognize a single element symbol", () => {
         const result = parseCompound("Ca", matchElement);
-        expect(result).toMatchObject({ composition: [{ id: "calcium", count: 1 }] });
+        console.log("CA", result)
+        expect(result).not.toBeNull();
+        expect(result!.type).toBe("molecule")
+        expect(result!.composition).toMatchObject([{
+          type: "element",
+          components: [{ id: "calcium", count: 1 }],
+          count: 1
+        }]);
       });
 
       it("should recognize a two-character symbol", () => {
         const result = parseCompound("Fe", matchElement);
-        expect(result).toMatchObject({ composition: [{ id: "iron", count: 1 }] });
+        expect(result).not.toBeNull();
+        expect(result!.composition).toMatchObject([{
+          type: "element",
+          components: [{ id: "iron", count: 1 }]
+        }]);
       });
 
       it("should recognize an element by full name", () => {
         const result = parseCompound("calcium", matchElement);
-        expect(result).toMatchObject({ composition: [{ id: "calcium", count: 1 }] });
+        expect(result).not.toBeNull();
+        expect(result!.composition).toMatchObject([{
+          type: "element",
+          components: [{ id: "calcium", count: 1 }]
+        }]);
       });
 
       it("should match molecules", () => {
         const result = parseCompound("S8", matchElement);
-        console.log("S8:", result)
-        expect(result?.composition).toMatchObject([{id: "sulfur", count: 8}])
+        expect(result).not.toBeNull();
+        expect(result!.composition).toMatchObject([{
+          type: "element",
+          components: [{ id: "sulfur", count: 8 }]
+        }]);
       });
 
       it.each([
@@ -148,68 +166,78 @@ describe("evaluateUserSearch", () => {
     describe("compounds", () => {
       it("should parse a simple two-element compound", () => {
         const result = parseCompound("CaS", matchElement);
-        expect(result).toMatchObject({
-          composition: [
-            { id: "calcium", count: 1 },
-            { id: "sulfur",  count: 1 }
-          ]
-        });
+        expect(result).not.toBeNull();
+        expect(result!.composition).toMatchObject([
+          { type: "element", components: [{ id: "calcium", count: 1 }] },
+          { type: "element", components: [{ id: "sulfur",  count: 1 }] },
+        ]);
       });
 
       it("should recognize more complicated compounds", () => {
         const result = parseCompound("Na2SO4", matchElement);
-        expect(result).toMatchObject({
-          composition: [
-            {id: "sodium", count: 2},
-            {id: "sulfur", count: 1},
-            {id: "oxygen", count: 4}
-          ]
-        })
+        expect(result).not.toBeNull();
+        expect(result!.composition).toMatchObject([
+          { type: "element", components: [{ id: "sodium",  count: 2 }] },
+          { type: "element", components: [{ id: "sulfur",  count: 1 }] },
+          { type: "element", components: [{ id: "oxygen",  count: 4 }] },
+        ]);
       });
 
       it("should parse subscripts correctly", () => {
         const result = parseCompound("H2O", matchElement);
-        expect(result).toMatchObject({
-          composition: [
-            { id: "hydrogen", count: 2 },
-            { id: "oxygen",   count: 1 }
-          ]
-        });
-      });
-
-      it.each([
-        ["Ca(OH)2", "Ca(OH)2"],
-        ["HNO3", "HNO3"],
-        ["Mg(NO3)2", "Mg(NO3)2"],
-        ["Al(NO3)3", "Al(NO3)3"],
-        ["Al2(OH)6", "Al2(OH)6"]
-      ])("should be match multiple atom groups correctly, for example %s.", (_, query) => {
-        const results = {
-          "Ca(OH)2": [{id: "calcium", count: 1}, {id: "oxygen", count: 2}, {id: "hydrogen", count: 2}],
-          "HNO3": [{id: "hydrogen", count: 1}, {id: "nitrogen", count: 1}, {id: "oxygen", count: 3}],
-          "Mg(NO3)2": [{id: "magnesium", count: 1}, {id: "nitrogen", count: 2}, {id: "oxygen", count: 6}],
-          "Al(NO3)3": [{id: "aluminium", count: 1}, {id: 'nitrogen', count: 3}, {id: "oxygen", count: 9}],
-          "Al2(OH)6": [{id: "aluminium", count: 2}, {id: "oxygen", count: 6}, {id: "hydrogen", count: 6}]
-        }
-        
-        const result = parseCompound(query, matchElement);
-        console.log(query, result)
-        // @ts-expect-error I'm too lazy to write type-checking for these tests. We know the values exist.
-        const el: unknown[] = (results[query] ?? []);
-
         expect(result).not.toBeNull();
-        expect(result!.composition).toMatchObject(el);
+        expect(result!.composition).toMatchObject([
+          { type: "element", components: [{ id: "hydrogen", count: 2 }] },
+          { type: "element", components: [{ id: "oxygen",   count: 1 }] },
+        ]);
       });
 
       it("should match atom groups correctly", () => {
         const result = parseCompound("Ca(OH)2", matchElement);
-        expect(result).toMatchObject({
-          composition: [
-            { id: "calcium", count: 1},
-            { id: "oxygen", count: 2 },
-            { id: "hydrogen",   count: 2 }
-          ]
-        });
+        expect(result).not.toBeNull();
+        expect(result!.composition).toMatchObject([
+          { type: "element",    components: [{ id: "calcium",  count: 1 }] },
+          { type: "atom_group", count: 2, components: [
+            { id: "oxygen",   count: 1 },
+            { id: "hydrogen", count: 1 },
+          ]},
+        ]);
+      });
+
+      it.each([
+        ["Ca(OH)2",  "Ca(OH)2"],
+        ["HNO3",     "HNO3"],
+        ["Mg(NO3)2", "Mg(NO3)2"],
+        ["Al(NO3)3", "Al(NO3)3"],
+        ["Al2(OH)6", "Al2(OH)6"],
+      ])("should match multiple atom groups correctly, for example %s.", (_, query) => {
+        const expected: Record<string, object[]> = {
+          "Ca(OH)2": [
+            { type: "element",    components: [{ id: "calcium",   count: 1 }] },
+            { type: "atom_group", count: 2, components: [{ id: "oxygen", count: 1 }, { id: "hydrogen", count: 1 }] },
+          ],
+          "HNO3": [
+            { type: "element", components: [{ id: "hydrogen", count: 1 }] },
+            { type: "element", components: [{ id: "nitrogen", count: 1 }] },
+            { type: "element", components: [{ id: "oxygen",   count: 3 }] },
+          ],
+          "Mg(NO3)2": [
+            { type: "element",    components: [{ id: "magnesium", count: 1 }] },
+            { type: "atom_group", count: 2, components: [{ id: "nitrogen", count: 1 }, { id: "oxygen", count: 3 }] },
+          ],
+          "Al(NO3)3": [
+            { type: "element",    components: [{ id: "aluminium", count: 1 }] },
+            { type: "atom_group", count: 3, components: [{ id: "nitrogen", count: 1 }, { id: "oxygen", count: 3 }] },
+          ],
+          "Al2(OH)6": [
+            { type: "element",    components: [{ id: "aluminium", count: 2 }] },
+            { type: "atom_group", count: 6, components: [{ id: "oxygen", count: 1 }, { id: "hydrogen", count: 1 }] },
+          ],
+        };
+
+        const result = parseCompound(query, matchElement);
+        expect(result).not.toBeNull();
+        expect(result!.composition).toMatchObject(expected[query]);
       });
 
       it("should not match full words with element symbols in them.", () => {

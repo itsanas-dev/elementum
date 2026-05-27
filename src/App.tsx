@@ -1,9 +1,9 @@
-import PeriodicTable from '@/components/PeriodicTable'
+import { PeriodicTable } from '@/components/PeriodicTable'
 import { useEffect, useState } from 'react'
 import type { PeriodicTableSchema } from './types'
 import LoadingFallback from './components/fallback/LoadingFallback';
 import '@/assets/css/app.css'
-import TooltipRenderer from './components/TooltipRenderer';
+import TooltipProvider from './components/provider/TooltipProvider';
 import Searchbar from './components/Searchbar';
 import PeriodicTableProvider from './components/provider/PeriodicTableProvider';
 import Toolbar from './components/Toolbar';
@@ -32,10 +32,9 @@ function App() {
   }, [])
 
   return (
-    <>
-      <TooltipRenderer />
-      <main className="centered">
-        <PeriodicTableProvider elementTable={table}>
+    <PeriodicTableProvider elementTable={table}>
+      <TooltipProvider>
+        <main className="centered">
           { 
             table ?
             <>
@@ -48,9 +47,9 @@ function App() {
             :
             <LoadingFallback />
           }
-        </PeriodicTableProvider>
-      </main>
-    </>
+        </main>
+      </TooltipProvider>
+    </PeriodicTableProvider>
   )
 }
 

@@ -26,24 +26,14 @@ export type TableElement = BaseEntryProperties & {
   group: number,
   phase: string,
   source: string,
-  bohr_model_image: string,
-  bohr_model_3d: string,
   summary: string,
   symbol: string,
-  wxpos: number,
-  wypos: number,
   shells: number[],
   electron_configuration: string,
   electron_configuration_semantic: string,
   electron_affinity: number,
   electronegativity_pauling: number,
   ionization_energies: number[],
-  cpk_hex: string,
-  image: {
-    title: string,
-    url: string,
-    attribution: string
-  },
   block: ElementBlock,
 };
 
@@ -55,6 +45,11 @@ export type TableSeparator = BaseEntryProperties & {
 
 export type TableEntry = | TableElement | TableSeparator
 
+export type TooltipState = {
+  selectedElement: string,
+  trigger: HTMLElement|null
+}
+
 export type TooltipPosition = {
   side: "right" | "left" | "top" | "bottom",
   position: {x: number, y: number}
@@ -63,3 +58,8 @@ export type TooltipPosition = {
 export type AppTheme = "dark" | "light";
 export type TemperatureUnit = "celsius" | "kelvin" | "fahrenheit"
 export type DensityUnit = "g_cm3" | "kg_m3"
+
+export type Config = {
+  preferredDensityUnit: DensityUnit,
+  preferredTemperatureUnit: TemperatureUnit
+}

@@ -26,8 +26,8 @@ export default function Toolbar() {
 
     const themeButton = (e.target as HTMLButtonElement);
     const rect = themeButton.getBoundingClientRect();
-    const x = rect.left + rect.width / 2;
-    const y = rect.top + rect.height / 2;
+    const x = Math.floor(rect.left + rect.width / 2 + 0.5);
+    const y = Math.floor(rect.top + rect.height / 2 + 0.5);
 
     const r = Math.hypot(
       Math.max(x, window.innerWidth - x),
@@ -47,7 +47,7 @@ export default function Toolbar() {
       ],
     },
     {
-      duration: 325,
+      duration: 350,
       easing: 'ease-in-out',
       pseudoElement: '::view-transition-new(root)',
     })
