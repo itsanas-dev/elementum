@@ -1,4 +1,3 @@
-import { getTextColour } from "@/lib/colour";
 import { getEntryColour } from "@/lib/periodicTable"
 import { ConfigContext } from "@/provider/ConfigContext";
 import type { TableSeparator } from "@/types"
