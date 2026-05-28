@@ -2,10 +2,11 @@ import clsx from "clsx"
 import { CircleQuestionMark, EqualIcon, Search } from "lucide-react"
 import React, { useCallback, useContext, useId, useMemo, useRef, useState, type ChangeEvent, type InputEvent, type JSX } from "react"
 import "@/assets/css/searchbox.css"
-import { evaluateUserSearch, getSearchExpression, type ParsedElement, type SearchIntent, type SearchIntentEntry } from "@/lib/search"
+import { evaluateUserSearch, getSearchExpression, type SearchIntent } from "@/lib/search"
 import LoadingFallback from "./fallback/LoadingFallback"
 import { AppContext } from "@/provider/PeriodicTableContext"
 import { ConfigContext } from "@/provider/ConfigContext"
+import type { ParsedElement, SearchIntentEntry } from "@/lib/searchTypes"
 
 type SearchboxStatus = {
   focused: boolean,

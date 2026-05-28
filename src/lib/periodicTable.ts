@@ -1,6 +1,6 @@
 import { type AppTheme, type PeriodicTableSchema, type TableEntry } from "@/lib/types";
-import type { ParsedElement } from "./search";
 import { AppThemes } from "./theme";
+import type { ElementCompositionComponent, ParsedElement } from "./searchTypes";
 
 export function getEntryColour(theme: AppTheme, element: TableEntry) {
   const themeDef = AppThemes[theme] ?? AppThemes["dark"];

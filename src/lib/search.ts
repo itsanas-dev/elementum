@@ -17,7 +17,7 @@ type SearchIntentExpression = {
   result: string
 }
 
-type SearchIntent = {
+export type SearchIntent = {
   evaluation: SearchIntentEntry[],
   warnings?: SearchWarning[],
 
