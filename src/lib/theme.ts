@@ -1,4 +1,4 @@
-import type { AppTheme } from "@/types"
+import type { AppTheme } from "@/lib/types"
 
 type ThemeDef = {
   metalloid: string,

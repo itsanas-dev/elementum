@@ -1,8 +1,8 @@
 import { TooltipContext } from "@/provider/TooltipContext"
-import { type TableElement, type TooltipPosition, type TooltipState } from "@/types"
+import { type TableElement, type TooltipPosition, type TooltipState } from "@/lib/types"
 import { useContext, useEffect, useRef, useState, type JSX, type ReactNode } from "react"
 import ElementInfo from "../ElementInfo"
-import { PeriodicTableContext } from "@/provider/PeriodicTableContext"
+import { AppContext } from "@/provider/PeriodicTableContext"
 import "@/assets/css/tooltip.css"
 import clsx from "clsx"
 
@@ -95,7 +95,7 @@ function Tooltip({children, trigger, className, ...rest}: TooltipProps) {
 }
 
 export default function TooltipProvider({ children }: Props) {
-  const {elementTable} = useContext(PeriodicTableContext)
+  const {elementTable} = useContext(AppContext)
   const tooltipPortal = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null)
   const [tooltipState, setTooltipState] = useState<TooltipState|null>(null);

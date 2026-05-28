@@ -1,7 +1,7 @@
-import { getDensityByConfig, getTemperatureByConfig } from "@/lib/periodicTable"
+import { getDensityByConfig, getTemperatureByConfig } from "@/lib/unitConversion"
 import { displayDecimal } from "@/lib/string"
 import { ConfigContext } from "@/provider/ConfigContext"
-import type { TableElement } from "@/types"
+import type { TableElement } from "@/lib/types"
 import { useContext } from "react"
 
 type Props = {

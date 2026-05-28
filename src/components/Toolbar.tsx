@@ -1,5 +1,5 @@
 import { ConfigContext } from "@/provider/ConfigContext"
-import type { AppTheme } from "@/types";
+import type { AppTheme } from "@/lib/types";
 import { MoonIcon, Settings, SunIcon } from "lucide-react";
 import { useContext, useRef, type MouseEvent } from "react"
 

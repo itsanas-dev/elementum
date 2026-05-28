@@ -1,5 +1,5 @@
 import { ConfigContext } from "@/provider/ConfigContext";
-import type { AppTheme, DensityUnit, TemperatureUnit } from "@/types";
+import type { AppTheme, DensityUnit, TemperatureUnit } from "@/lib/types";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 type ProviderProps = {children: ReactNode}

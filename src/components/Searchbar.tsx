@@ -4,7 +4,7 @@ import React, { useCallback, useContext, useId, useMemo, useRef, useState, type 
 import "@/assets/css/searchbox.css"
 import { evaluateUserSearch, getSearchExpression, type ParsedElement, type SearchIntent, type SearchIntentEntry } from "@/lib/search"
 import LoadingFallback from "./fallback/LoadingFallback"
-import { PeriodicTableContext } from "@/provider/PeriodicTableContext"
+import { AppContext } from "@/provider/PeriodicTableContext"
 import { ConfigContext } from "@/provider/ConfigContext"
 
 type SearchboxStatus = {
@@ -19,7 +19,7 @@ type SearchboxEntryProps = {
 }
 
 const SearchboxEntry = React.memo(({ intentEntry, elements }: SearchboxEntryProps) => {
-  const {elementTable} = useContext(PeriodicTableContext);
+  const {elementTable} = useContext(AppContext);
   const { preferredDensityUnit, preferredTemperatureUnit } = useContext(ConfigContext);
   const evaluation = useMemo(() => getSearchExpression(elementTable!, intentEntry, elements, {preferredDensityUnit, preferredTemperatureUnit}), [preferredDensityUnit, preferredTemperatureUnit])
   
@@ -46,7 +46,7 @@ const SearchboxEntry = React.memo(({ intentEntry, elements }: SearchboxEntryProp
 })
 
 export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["input"]) {
-  const { elementTable, elementSymbolLookup } = useContext(PeriodicTableContext);
+  const { elementTable, elementSymbolLookup } = useContext(AppContext);
   const [searchboxState, setSearchboxState] = useState<SearchboxStatus>({focused: false, query: null, status: "empty"});
   const searchTimeoutRef = useRef<number>(-1);
   const searchboxRef = useRef<HTMLDivElement>(null);

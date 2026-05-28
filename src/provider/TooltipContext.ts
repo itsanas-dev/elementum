@@ -1,4 +1,4 @@
-import type { TooltipState } from "@/types"
+import type { TooltipState } from "@/lib/types"
 import { createContext, type RefObject, type SetStateAction } from "react"
 
 

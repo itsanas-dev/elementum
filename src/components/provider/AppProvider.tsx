@@ -1,10 +1,10 @@
-import { PeriodicTableContext, type PeriodicTableContextObject } from "@/provider/PeriodicTableContext"
-import type { PeriodicTableSchema, TableElement } from "@/types"
+import { AppContext, type AppContextObject } from "@/provider/PeriodicTableContext"
+import type { PeriodicTableSchema, TableElement } from "@/lib/types"
 import { useMemo, type ReactNode } from "react"
 
 type ProviderProps = {
   children: ReactNode,
-  elementTable: PeriodicTableSchema|null
+  elementTable: PeriodicTableSchema|null,
 }
 
 function createLookup(table: PeriodicTableSchema|null, mapper: (entry: TableElement) => string) {
@@ -29,7 +29,7 @@ function createLookup(table: PeriodicTableSchema|null, mapper: (entry: TableElem
   return lookup;
 }
 
-export default function PeriodicTableProvider({ elementTable, children }: ProviderProps) {
+export default function AppProvider({ elementTable, children }: ProviderProps) {
   const symbolLookup = useMemo<Record<string, string>|null>(() => createLookup(elementTable, (entry) => {
     return entry.symbol;
   }), [elementTable]);
@@ -82,7 +82,7 @@ export default function PeriodicTableProvider({ elementTable, children }: Provid
     return lookup;
   }, [elementTable])
   
-  const providerObject: PeriodicTableContextObject = useMemo(() => ({
+  const providerObject: AppContextObject = useMemo(() => ({
     elementTable,
 
     elementSymbolLookup: symbolLookup,
@@ -91,8 +91,8 @@ export default function PeriodicTableProvider({ elementTable, children }: Provid
   }), [elementTable, symbolLookup, groupLookup, periodLookup])
   
   return (
-    <PeriodicTableContext.Provider value={providerObject}>
+    <AppContext.Provider value={providerObject}>
       {children}
-    </PeriodicTableContext.Provider>
+    </AppContext.Provider>
   )
 }

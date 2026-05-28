@@ -1,7 +1,7 @@
-import type { PeriodicTableSchema } from "@/types"
+import type { PeriodicTableSchema } from "@/lib/types"
 import { createContext } from "react"
 
-export type PeriodicTableContextObject = {
+export type AppContextObject = {
   elementTable: PeriodicTableSchema|null,
 
   /// Converts a symbol, group or the period to an id that can be indexed into elementTable.
@@ -10,8 +10,9 @@ export type PeriodicTableContextObject = {
   periodLookup: Record<number, string[]>|null
 }
 
-export const PeriodicTableContext = createContext<PeriodicTableContextObject>({
+export const AppContext = createContext<AppContextObject>({
   elementTable: null,
+  
   elementSymbolLookup: null,
   groupLookup: null,
   periodLookup: null

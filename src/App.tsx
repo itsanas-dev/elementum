@@ -1,24 +1,23 @@
 import { PeriodicTable } from '@/components/PeriodicTable'
 import { useEffect, useState } from 'react'
-import type { PeriodicTableSchema } from './types'
+import type { PeriodicTableSchema } from './lib/types'
 import LoadingFallback from './components/fallback/LoadingFallback';
 import '@/assets/css/app.css'
 import TooltipProvider from './components/provider/TooltipProvider';
 import Searchbar from './components/Searchbar';
-import PeriodicTableProvider from './components/provider/PeriodicTableProvider';
+import AppProvider from './components/provider/AppProvider';
 import Toolbar from './components/Toolbar';
 
 function App() {
   const [table, setTable] = useState<PeriodicTableSchema|null>(null);
 
   useEffect(() => {
-    async function fetchTableJson() {
+    async function fetchTable() {
       const res = await fetch("/periodic_table.json", {
         method: "GET",
         headers: {
           'Accept': "application/json"
-        },
-
+        }
       });
 
       if (res.ok) {
@@ -28,11 +27,11 @@ function App() {
       }
     }
 
-    fetchTableJson();
+    fetchTable();
   }, [])
 
   return (
-    <PeriodicTableProvider elementTable={table}>
+    <AppProvider elementTable={table}>
       <TooltipProvider>
         <main className="centered">
           { 
@@ -49,7 +48,7 @@ function App() {
           }
         </main>
       </TooltipProvider>
-    </PeriodicTableProvider>
+    </AppProvider>
   )
 }
 

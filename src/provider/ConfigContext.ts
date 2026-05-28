@@ -1,4 +1,4 @@
-import { type AppTheme, type DensityUnit, type TemperatureUnit } from "@/types";
+import { type AppTheme, type DensityUnit, type TemperatureUnit } from "@/lib/types";
 import { createContext } from "react";
 
 function unimplemented() {

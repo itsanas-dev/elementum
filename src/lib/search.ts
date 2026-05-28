@@ -1,62 +1,23 @@
-import type { Config, PeriodicTableSchema, TableElement } from "@/types"
-import { calculateAtomicMass, constructMolecularFormula, flattenComposition, gcd, getDensityByConfig, getTemperatureByConfig } from "./periodicTable"
+import type { Config, PeriodicTableSchema, TableElement } from "@/lib/types"
+import { calculateAtomicMass, constructMolecularFormula } from "./periodicTable"
+import { getDensityByConfig, getTemperatureByConfig } from "./unitConversion"
+import { getEmpiricalFormula } from "./empiricalFormula"
 import { displayDecimal, isDigit } from "./string"
+import type { ElementCompositionComponent, ParsedElement, SearchAction, SearchIntentEntry, SearchSchemaEntry } from "./searchTypes"
 
-export type Atom = {
-  id: string,
-  count: number
-}
-
-export type ElementCompositionComponent = {
-  type: "element" | "atom_group",
-
-  components: Atom[],
-  atomGroupCount: number
-}
-
-/// Contains ids to the element entries themselves.
-export type ParsedElement = {
-  raw: string,
-  type: "compound" | "molecule",
-  composition: ElementCompositionComponent[]
-}
-
-export type SearchAction = "unknown" |
-                           "molar_mass" |
-                           "atomic_number" |
-                           "element_density" |
-                           "electronic_configuration_semantic" |
-                           "electronic_configuration_full" |
-                           "element_period" |
-                           "element_group" |
-                           "element_phase" |
-                           "element_mp" |
-                           "element_bp" |
-                           "element_electronaffinity" |
-                           "element_appearance" |
-                           "electronegativity" |
-                           "empirical_formula"
-
-export type SearchSchemaEntry = {
-  type: SearchAction,
-  keywords: string[],
-  params: {
-    allowCompounds: boolean,
-    minElementArguments: number // The minimum number of elements required for this action to be applicable
-  },
-}
-
-export type SearchIntentEntry = {
-  type: SearchAction,
-  confidence: number,
-}
 
 type SearchWarning = | {kind: "unknown_element", token: string}
                      | {kind: "element_only_query", name: string}
                      | {kind: "argument_mismatch", received: number, expected: number, name: string }
                      | {kind: "unsupported_operation", message: string}
 
-export type SearchIntent = {
+
+type SearchIntentExpression = {
+  action: string,
+  result: string
+}
+
+type SearchIntent = {
   evaluation: SearchIntentEntry[],
   warnings?: SearchWarning[],
 
@@ -65,12 +26,6 @@ export type SearchIntent = {
   }
 }
 
-type SearchIntentExpression = {
-  action: string,
-  result: string
-}
-
-// TODO: Change it into a json file or something else for better organization
 const SearchSchema: SearchSchemaEntry[] = [
   {
     type: "molar_mass",
@@ -248,7 +203,7 @@ const SearchSchema: SearchSchemaEntry[] = [
 
     params: {minElementArguments: 1, allowCompounds: true}
   }
-] as const
+] as const;
 
 const SearchStopWords = new Set([
   "what", "of", "is", "the", "and", "be", "no",
@@ -367,25 +322,10 @@ export function getSearchExpression(
         (el) => `${el.electronegativity_pauling}`
       )
 
-    /// Most impressive routine I have written.
-    /// Very proud of this one.
     case "empirical_formula": {
       const element = elements[0];
-      const atoms = flattenComposition(element);
-
-      if (atoms.length === 0) return null;
-
-      const coefficients = atoms.map((a) => {
-        return a.count;
-      });
-
-      const gcdFactor = gcd(coefficients);
-
-      const composition: ElementCompositionComponent[] = atoms.map((a) => {
-        return {type: "element", components: [{id: a.id, count: a.count / gcdFactor}], atomGroupCount: 1}
-      });
-
-      const empiricalFormula = constructMolecularFormula(table, composition);
+      const empiricalComposition = getEmpiricalFormula(element.composition);
+      const empiricalFormula = constructMolecularFormula(table, empiricalComposition);
 
       if (!empiricalFormula) return null;
 

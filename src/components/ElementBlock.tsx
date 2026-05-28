@@ -2,7 +2,7 @@ import { getTextColour } from "@/lib/colour"
 import { getEntryColour } from "@/lib/periodicTable"
 import { displayDecimal } from "@/lib/string"
 import { ConfigContext } from "@/provider/ConfigContext"
-import type { TableElement } from "@/types"
+import type { TableElement } from "@/lib/types"
 import clsx from "clsx"
 import React, { useContext, type CSSProperties, type JSX, type MouseEvent } from "react"
 

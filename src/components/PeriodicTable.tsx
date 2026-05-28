@@ -1,4 +1,4 @@
-import {type PeriodicTableSchema, type TableEntry } from "@/types"
+import {type PeriodicTableSchema, type TableEntry } from "@/lib/types"
 import { ElementBlock } from "./ElementBlock";
 import SeparatorBlock from "./SeparatorBlock";
 import React, { useContext } from "react";
@@ -11,7 +11,7 @@ type PeriodicTableComponentProps = {
 function PeriodicTableComponent({table}: PeriodicTableComponentProps) {  
   const { setTooltipState, tooltipState } = useContext(TooltipContext);
 
-  function showTooltip(elementId: string, e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
+  function onElementBlockClick(elementId: string, e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     if (e.button !== 0) return;
     if (tooltipState?.selectedElement === elementId) return;
 
@@ -40,7 +40,7 @@ function PeriodicTableComponent({table}: PeriodicTableComponentProps) {
                   key={entry.symbol}
                   data-element={elementId}
                   aria-labelledby={tooltipState?.selectedElement === elementId ? `element-info-tooltip` : undefined}
-                  onClick={(e) => showTooltip(elementId, e)}
+                  onClick={(e) => onElementBlockClick(elementId, e)}
                   element={entry} 
                 />
               }

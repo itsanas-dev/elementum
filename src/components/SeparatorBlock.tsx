@@ -1,6 +1,6 @@
 import { getEntryColour } from "@/lib/periodicTable"
 import { ConfigContext } from "@/provider/ConfigContext";
-import type { TableSeparator } from "@/types"
+import type { TableSeparator } from "@/lib/types"
 import { useContext } from "react";
 
 type SeparatorBlockComponentProps = {
