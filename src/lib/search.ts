@@ -26,9 +26,8 @@ export type SearchIntent = {
   }
 }
 
-const SearchSchema: SearchSchemaEntry[] = [
-  {
-    type: "molar_mass",
+const SearchSchema: Partial<Record<SearchAction, SearchSchemaEntry>> = {
+  "molar_mass": {
     params: {minElementArguments: 1, allowCompounds: true},
     keywords: [
       "mr",
@@ -46,8 +45,7 @@ const SearchSchema: SearchSchemaEntry[] = [
     ]
   },
 
-  {
-    type: "electronic_configuration_semantic",
+  "electronic_configuration_semantic": {
     params: {minElementArguments: 1, allowCompounds: false},
     keywords: [
       "short electronic configuration",
@@ -68,8 +66,7 @@ const SearchSchema: SearchSchemaEntry[] = [
     ],
   },
 
-  {
-    type: "electronic_configuration_full",
+  "electronic_configuration_full": {
     params: {minElementArguments: 1, allowCompounds: false},
     keywords: [
       "full electronic configuration",
@@ -89,14 +86,12 @@ const SearchSchema: SearchSchemaEntry[] = [
     ],
   },
 
-  {
-    type: "element_density",
+  "element_density": {
     params: {minElementArguments: 1, allowCompounds: false},
     keywords: ["density", "dense", "heavy"]
   },
 
-  {
-    type: "element_group",
+  "element_group": {
     keywords: [
       "group",
       "family",
@@ -106,8 +101,7 @@ const SearchSchema: SearchSchemaEntry[] = [
     params: {minElementArguments: 1, allowCompounds: false}
   },
 
-  {
-    type: "element_period",
+  "element_period": {
     keywords: [
       "period",
       "principal quantum level",
@@ -117,20 +111,18 @@ const SearchSchema: SearchSchemaEntry[] = [
     params: {minElementArguments: 1, allowCompounds: false}
   },
 
-  {
-    type: "element_phase",
+  "element_state": {
     keywords: [
-      "phase",
       "physical state",
       "state",
       "state at rtp",
-      "state at room temperature"
+      "state at room temperature",
+      "matter"
     ],
     params: {minElementArguments: 1, allowCompounds: false} /// Unfortunately, we don't have physical state info on compounds.
   },
   
-  {
-    type: "atomic_number",
+  "atomic_number": {
     keywords: [
       "atomic number",
       "proton number",
@@ -143,8 +135,7 @@ const SearchSchema: SearchSchemaEntry[] = [
     params: {minElementArguments: 1, allowCompounds: false}
   },
 
-  {
-    type: "element_mp",
+  "element_mp": {
     keywords: [
       "melting point", "mp",
       "melting", "melt", 
@@ -155,8 +146,7 @@ const SearchSchema: SearchSchemaEntry[] = [
     params: {minElementArguments: 1, allowCompounds: false}
   },
 
-  {
-    type: "element_bp",
+  "element_bp": {
     keywords: [
       "boil", "bp", "boiling", "boiling point",
       "vaporization", "vapourization", "vapourization point",
@@ -165,16 +155,14 @@ const SearchSchema: SearchSchemaEntry[] = [
     params: {minElementArguments: 1, allowCompounds: false}
   },
 
-  {
-    type: "element_appearance",
+  "element_appearance": {
     keywords: [
       "appearance", "look", "looks", "appear"
     ],
     params: {minElementArguments: 1, allowCompounds: false}
   },
   
-  {
-    type: "element_electronaffinity",
+  "element_electronaffinity": {
     keywords: [
       "electron affinity", "electroaffinity", "affinity",
       "e- affinity", "e-affinity"
@@ -183,18 +171,15 @@ const SearchSchema: SearchSchemaEntry[] = [
     params: {minElementArguments: 1, allowCompounds: false}
   },
 
-  {
-    type: "electronegativity",
+  "electronegativity": {
     keywords: [
-      "electronegativity", "en", "electronegativity difference",
-      "en difference", "en diff", "electronegativity diff"
+      "electronegativity", "en", "atom en", "atom electronegativity"
     ],
 
     params: {minElementArguments: 1, allowCompounds: false}
   },
 
-  {
-    type: "empirical_formula",
+  "empirical_formula": {
     keywords: [
       "empirical formula", "emp formula", "empirical",
       "simplest formula", "compositional formula", "stoichometric formula",
@@ -202,14 +187,25 @@ const SearchSchema: SearchSchemaEntry[] = [
     ],
 
     params: {minElementArguments: 1, allowCompounds: true}
+  },
+
+  "bond_electronegativity": {
+    keywords: [
+      "en", "electronegativity", "electronegative difference",
+      "en difference", "electronegativity difference", "en diff",
+      "electronegative diff", "electronegativity pauling", "en pauling"
+    ],
+
+    params: {minElementArguments: 2, allowCompounds: false}
   }
-] as const;
+} as const;
 
 const SearchStopWords = new Set([
   "what", "of", "is", "the", "and", "be", "no",
   "for", "to", "in", "give", "show", "display", "why", "are",
   "were", "was", "there"
 ]);
+
 
 function getNthElement(list: ParsedElement[], n: number) {
   if (n >= list.length) return null;
@@ -224,7 +220,9 @@ function getNthElement(list: ParsedElement[], n: number) {
 }
 
 export function getIntendedArgumentCount(intentType: SearchAction) {
-  const entry = SearchSchema.find((i) => i.type === intentType);
+  if (intentType === "unknown") return -1;
+
+  const entry = SearchSchema[intentType];
 
   if (!entry) return -1;
 
@@ -286,10 +284,10 @@ export function getSearchExpression(
         (el) => `Period ${el.period}`
       )
 
-    case "element_phase":
+    case "element_state":
       return displayElementAttribute(table, elements,
         (el) => `The physical state (at r.t.p) of ${el.symbol} is`,
-        (el) => `${el.phase}`
+        (el) => `${el.state}`
       )
 
     case "element_mp":
@@ -334,6 +332,24 @@ export function getSearchExpression(
         result: empiricalFormula
       }
     }
+
+    case "bond_electronegativity": {
+      const element1 = table[getNthElement(elements, 0)!.id]!;
+      const element2 = table[getNthElement(elements, 1)!.id]!;
+
+      if (element1.type !== "element" || element2.type !== "element") return null;
+
+      const enDiff = Math.abs(element1.electronegativity_pauling - element2.electronegativity_pauling);
+      const towards = element1.electronegativity_pauling > element2.electronegativity_pauling ? element1 : element2;
+      const isEqual = enDiff <= 1e-5;
+      const suffix = !isEqual ? ` (towards ${towards.symbol})` : "";
+
+      return {
+        action: `The E.N difference in ${element1.symbol}-${element2.symbol} bond is`,
+        result: `${enDiff.toFixed(2)}${suffix}`
+      }
+    } 
+
     case "unknown":
       return {result: "Waiting for something to happen?", action: "Your search was too vague. Please try again."}
     default:
@@ -479,7 +495,8 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
 
   const searchScore: Partial<Record<SearchAction, number>> = {};
 
-  for (const entry of SearchSchema) {
+  for (const entryKey of Object.keys(SearchSchema)) {
+    const entry = SearchSchema[entryKey as SearchAction]!;
     let score = 0;
     
     /// Give the longer keywords more priority, and also to match them more greedily than smaller ones.
@@ -511,7 +528,7 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
     if (!entry.params.allowCompounds && hasCompounds) {
       warnings.push({
         kind: "element_only_query",
-        name: entry.type
+        name: entryKey
       })
       continue;
     }
@@ -522,12 +539,12 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
         kind: "argument_mismatch",
         expected: entry.params.minElementArguments,
         received: elementMap.length,
-        name: entry.type
+        name: entryKey
       });
       continue;
     }
 
-    searchScore[entry.type] = score;
+    searchScore[entryKey as SearchAction] = score;
   }
 
   const intentMatches = Object.keys(searchScore) as SearchAction[];

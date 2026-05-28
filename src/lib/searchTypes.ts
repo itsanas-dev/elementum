@@ -25,16 +25,16 @@ export type SearchAction = "unknown" |
                            "electronic_configuration_full" |
                            "element_period" |
                            "element_group" |
-                           "element_phase" |
+                           "element_state" |
                            "element_mp" |
                            "element_bp" |
                            "element_electronaffinity" |
                            "element_appearance" |
                            "electronegativity" |
-                           "empirical_formula"
+                           "empirical_formula" |
+                           "bond_electronegativity"
 
 export type SearchSchemaEntry = {
-  type: SearchAction,
   keywords: string[],
   params: {
     allowCompounds: boolean,

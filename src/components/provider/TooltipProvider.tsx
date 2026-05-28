@@ -1,7 +1,7 @@
 import { TooltipContext } from "@/provider/TooltipContext"
 import { type TableElement, type TooltipPosition, type TooltipState } from "@/lib/types"
 import { useContext, useEffect, useRef, useState, type JSX, type ReactNode } from "react"
-import ElementInfo from "../ElementInfo"
+import ElementInfo from "../ui/ElementInfo"
 import { AppContext } from "@/provider/PeriodicTableContext"
 import "@/assets/css/tooltip.css"
 import clsx from "clsx"

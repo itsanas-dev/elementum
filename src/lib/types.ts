@@ -24,7 +24,7 @@ export type TableElement = BaseEntryProperties & {
   number: number,
   period: number,
   group: number,
-  phase: string,
+  state: string,
   source: string,
   summary: string,
   symbol: string,
@@ -63,3 +63,5 @@ export type Config = {
   preferredDensityUnit: DensityUnit,
   preferredTemperatureUnit: TemperatureUnit
 }
+
+export type NavigationPageId = "page_undefined" | "page_table" | "page_searchhelp" | "page_about"

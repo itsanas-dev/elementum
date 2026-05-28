@@ -35,6 +35,11 @@ export default function ElementInfo({ element }: Props) {
       <p>Density: <strong>{densityDisplay}</strong></p>
       <p>Melting point: <strong>{meltDisplay}</strong></p>
       <p>Boiling point: <strong>{boilDisplay}</strong></p>
+      <p>Appearance: <strong>{element.appearance || "Unknown"}</strong></p>
+      {
+      element.electronegativity_pauling &&
+        <p>Electronegativity: <strong>{element.electronegativity_pauling}</strong></p>
+      }
 
       <div aria-hidden className="tooltip-separator"></div>
 

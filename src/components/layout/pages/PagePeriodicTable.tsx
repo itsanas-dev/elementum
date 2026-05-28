@@ -1,14 +1,12 @@
-import {type PeriodicTableSchema, type TableEntry } from "@/lib/types"
-import { ElementBlock } from "./ElementBlock";
-import SeparatorBlock from "./SeparatorBlock";
+import { type TableEntry } from "@/lib/types"
+import { ElementBlock } from "@/components/ui/ElementBlock";
+import SeparatorBlock from "@/components/ui/SeparatorBlock";
 import React, { useContext } from "react";
 import { TooltipContext } from "@/provider/TooltipContext";
+import { AppContext } from "@/provider/PeriodicTableContext";
 
-type PeriodicTableComponentProps = {
-  table: PeriodicTableSchema
-}
-
-function PeriodicTableComponent({table}: PeriodicTableComponentProps) {  
+function PeriodicTableComponent() {
+  const { elementTable } = useContext(AppContext);
   const { setTooltipState, tooltipState } = useContext(TooltipContext);
 
   function onElementBlockClick(elementId: string, e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
@@ -25,12 +23,14 @@ function PeriodicTableComponent({table}: PeriodicTableComponentProps) {
     });
   }
 
+  if (!elementTable) return null;
+
   return (
     <>
       <div className="ptable-wrapper">
         <div role="grid" className="ptable">
-          {table.order.map((elementId) => {
-            const entry: TableEntry|undefined = table[elementId];
+          {elementTable.order.map((elementId) => {
+            const entry: TableEntry|undefined = elementTable[elementId];
 
             if (!entry) return null;
 
@@ -39,6 +39,7 @@ function PeriodicTableComponent({table}: PeriodicTableComponentProps) {
                 return <ElementBlock
                   key={entry.symbol}
                   data-element={elementId}
+                  data-selected={(tooltipState?.selectedElement === elementId) || undefined}
                   aria-labelledby={tooltipState?.selectedElement === elementId ? `element-info-tooltip` : undefined}
                   onClick={(e) => onElementBlockClick(elementId, e)}
                   element={entry} 

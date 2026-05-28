@@ -1,6 +1,6 @@
 .searchbox-wrapper {
   display: inline-flex;
-  position: absolute;
+  position: relative;
   background-color: var(--color-input-background);
   padding: 0 0.9rem;
   border-radius: 6px;
@@ -9,7 +9,6 @@
   min-width: 150px;
   height: 2.5rem;
   width: 21rem;
-  align-self: center;
 
   border: 1px solid var(--color-input-border);
   transition: border-radius 70ms ease;
@@ -113,8 +112,6 @@
 @media screen and (max-width: 620px) {
   .searchbox-wrapper {
     width: 70vw;
-    margin-left: 1rem;
-    align-self: flex-start;
   }
 
   /* .searchbox-result {

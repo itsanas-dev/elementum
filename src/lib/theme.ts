@@ -12,6 +12,9 @@ type ThemeDef = {
 
   unknown: string,
   seriesBlock: string,
+
+  lanthanides: string,
+  actinides: string
 }
 
 export const AppThemes: Record<AppTheme, ThemeDef> = {
@@ -26,6 +29,9 @@ export const AppThemes: Record<AppTheme, ThemeDef> = {
     nobleGas: "#a452c2",
     postTransitionMetal: "#93ad37",
     unknown: "#ffffff",
+
+    lanthanides: "#92c4d8",
+    actinides: "#58a7c6"
   },
 
   "light": {
@@ -39,5 +45,8 @@ export const AppThemes: Record<AppTheme, ThemeDef> = {
     nobleGas: "#af55d0",
     postTransitionMetal: "#9bb831",
     unknown: "#919191",
+
+    lanthanides: "#8dcde6",
+    actinides: "#4fa7c9",
   }
 }

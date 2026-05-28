@@ -1,5 +1,6 @@
 :root {
   --font-family: "Inter", var(--default-font-family);
+  --color-code-bg: #1b1a1f;
   --color-text-muted: #919191;
   --color-tooltip-bg: #181818;
   --color-br-separator: #2b2b2e;
@@ -8,11 +9,12 @@
   --color-input-border: #64646466;
   --color-searchentry-hover: rgba(220, 220, 220, 0.05);
   --color-searchentry-click: rgba(220, 220, 220, 0.09);
-  --color-iconbutton-hover: rgba(210, 210, 210, 0.06);
-  --color-iconbutton-click: rgba(210, 210, 210, 0.09);
+
+  --code-font: "Source Code Pro", monospace;
 }
 
 :root[data-theme="light"] {
+  --color-code-bg: #dadbda;
   --color-text-muted: #474949;
   --color-tooltip-bg: #f6f6f6;
   --color-input-background: #f6f6f6;
@@ -22,8 +24,42 @@
   
   --color-searchentry-hover: rgba(50, 50, 50, 0.05);
   --color-searchentry-click: rgba(50, 50, 50, 0.08);
-  --color-iconbutton-hover: rgba(50, 50, 50, 0.05);
-  --color-iconbutton-click: rgba(50, 50, 50, 0.08);
+}
+
+/* If you don't have view transitions for theme switching, transition normally */
+:root[data-themechange-compat="true"] body, :root[data-themechange-compat="true"] main {
+  transition: color 200ms ease, background 200ms ease;
+}
+
+footer {
+  margin-top: 3rem;
+  width: 100%;
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.footer-links {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  gap: 0.5rem;
+}
+
+a {
+  color: var(--color-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+a:focus-visible, a:hover {
+  text-decoration: underline;
 }
 
 html {
@@ -31,9 +67,9 @@ html {
 }
 
 main {
+  margin-top: 10rem;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
 }
 
 #portal--tooltip {
@@ -42,6 +78,7 @@ main {
 
 body, main {
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 button, input, body, label {
@@ -53,7 +90,20 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
 }
 
+.underline {
+  text-decoration: underline;
+}
+
+code {
+  font-family: var(--code-font);
+  
+  background-color: var(--color-code-bg);
+  padding: 2px 0.25rem;
+  border-radius: 3px;
+}
+
 ::view-transition-old(root), ::view-transition-new(root) {
+  z-index: 99999;
   animation: none;
   mix-blend-mode: normal;
 }

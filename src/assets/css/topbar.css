@@ -1,0 +1,84 @@
+.topbar {
+  position: absolute;
+  /* transform: translate3d(0,0,0); */
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  left: 0;
+  width: 100%;
+  top: 1.75rem;
+
+  z-index: 98;
+  padding-top: 1.5rem;
+  padding-inline: 0.75rem;
+}
+
+.topbar-search {
+  grid-column: 2;
+}
+
+.toolbar {
+  grid-column: 3;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  
+  gap: 0.5rem;
+}
+
+.icon-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 0;
+  outline: none;
+  background: var(--color-bg);
+
+  cursor: pointer;
+  border-radius: 100%;
+  padding: 0.5rem;
+}
+
+:root[data-theme="light"] .icon-button:focus-visible, 
+  :root[data-theme="light"] .icon-button:hover {
+  filter: brightness(95%);
+}
+
+:root[data-theme="dark"] .icon-button:focus-visible, 
+  :root[data-theme="dark"] .icon-button:hover {
+  filter: brightness(120%);
+}
+
+:root[data-theme="light"] .icon-button:active {
+  filter: brightness(90%);
+}
+
+:root[data-theme="dark"] .icon-button:active {
+  filter: brightness(130%);
+}
+
+
+@media screen and (max-width: 620px) {
+  .topbar {
+    grid-template-columns: auto 1fr;
+    gap: 0.75rem;
+    padding-right: 2.5rem;
+  }
+
+  .topbar-search {
+    grid-column: 1;
+  }
+
+  .toolbar {
+    grid-column: 2;
+  }
+
+  .toolbar {
+    gap: 0.25rem;
+  }
+
+  .icon-button > svg {
+    width: 20px;
+    height: 20px
+  }
+}

@@ -1,9 +1,9 @@
 import clsx from "clsx"
 import { CircleQuestionMark, EqualIcon, Search } from "lucide-react"
-import React, { useCallback, useContext, useId, useMemo, useRef, useState, type ChangeEvent, type InputEvent, type JSX } from "react"
+import React, { useCallback, useContext, useId, useMemo, useRef, useState, type ChangeEvent, type InputEvent, type JSX, type ReactNode } from "react"
 import "@/assets/css/searchbox.css"
-import { evaluateUserSearch, getSearchExpression, type SearchIntent } from "@/lib/search"
-import LoadingFallback from "./fallback/LoadingFallback"
+import { evaluateUserSearch, getIntendedArgumentCount, getSearchExpression, type SearchIntent } from "@/lib/search"
+import LoadingFallback from "../fallback/LoadingFallback"
 import { AppContext } from "@/provider/PeriodicTableContext"
 import { ConfigContext } from "@/provider/ConfigContext"
 import type { ParsedElement, SearchIntentEntry } from "@/lib/searchTypes"
@@ -15,11 +15,23 @@ type SearchboxStatus = {
 }
 
 type SearchboxEntryProps = {
+  icon: ReactNode,
   intentEntry: SearchIntentEntry,
   elements: ParsedElement[]
 }
 
-const SearchboxEntry = React.memo(({ intentEntry, elements }: SearchboxEntryProps) => {
+// Ensures that you need a large threshold to show the other result.
+// Masks out weak words like 'EN', 'mass' and so on in place of longer terms
+function filterIntents(intents: SearchIntentEntry[]): SearchIntentEntry[] {
+  if (intents.length < 2) return intents;
+
+  const [first, ...rest] = intents;
+  const threshold = first.confidence * 0.55; // 60% of the first result must be achieved for it to show second result.
+
+  return [first, ...rest.filter(intent => intent.confidence >= threshold)];
+}
+
+const SearchboxEntry = React.memo(({ icon, intentEntry, elements }: SearchboxEntryProps) => {
   const {elementTable} = useContext(AppContext);
   const { preferredDensityUnit, preferredTemperatureUnit } = useContext(ConfigContext);
   const evaluation = useMemo(() => getSearchExpression(elementTable!, intentEntry, elements, {preferredDensityUnit, preferredTemperatureUnit}), [preferredDensityUnit, preferredTemperatureUnit])
@@ -28,8 +40,7 @@ const SearchboxEntry = React.memo(({ intentEntry, elements }: SearchboxEntryProp
 
   return (
     <button aria-label={`${evaluation.action} ${evaluation.result}`} className="searchbox-entry-wrapper">
-      {/* TODO: Add a more robust way of setting the icon, preferably in the configuration of the search actions. */}
-      {intentEntry.type === "unknown" ? <CircleQuestionMark className="icon-noshrink" size={20} /> : <EqualIcon className="icon-noshrink" size={20} aria-hidden />}
+      {icon}
       <div className="searchbox-entry" aria-hidden>
         {
           (evaluation.action && evaluation.action.length > 0) && 
@@ -46,11 +57,63 @@ const SearchboxEntry = React.memo(({ intentEntry, elements }: SearchboxEntryProp
   )
 })
 
+function SearchboxQueryResults({ query }: {query: SearchIntent}) {
+  return <>
+    {query && filterIntents(query.evaluation).map((intent) => {
+      const elements = query.params.elements;
+      const argumentCount = getIntendedArgumentCount(intent.type);
+
+      // Get a max of 4 permutations of a single-argument function
+      // If you have more than 1 element provided.
+      if (elements.length > 1 && argumentCount === 1) {
+        let elementSlice = elements;
+
+        if (elements.length > 4) {
+          elementSlice = elements.slice(0, 4)
+        }
+
+        return (
+          <>
+            {elementSlice.map((el, index) => (
+              <SearchboxEntry 
+                key={`${intent.type}${index+1}`} 
+                elements={[el]}
+                icon={
+                  intent.type === "unknown" ? 
+                  <CircleQuestionMark className="icon-noshrink" size={20} /> 
+                  : 
+                  <EqualIcon className="icon-noshrink" size={20} aria-hidden />
+                } 
+                intentEntry={intent} 
+              />
+            ))}
+          </>
+        )
+      }
+
+      return (
+        <SearchboxEntry 
+          key={`${intent.type}0`}
+          icon={
+            intent.type === "unknown" ? 
+            <CircleQuestionMark className="icon-noshrink" size={20} /> 
+            : 
+            <EqualIcon className="icon-noshrink" size={20} aria-hidden />
+          }
+          elements={elements} 
+          intentEntry={intent} 
+        />
+      )
+    })}
+  </>
+}
+
 export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["input"]) {
   const { elementTable, elementSymbolLookup } = useContext(AppContext);
   const [searchboxState, setSearchboxState] = useState<SearchboxStatus>({focused: false, query: null, status: "empty"});
   const searchTimeoutRef = useRef<number>(-1);
-  const searchboxRef = useRef<HTMLDivElement>(null);
+  const searchboxInputRef = useRef<HTMLInputElement>(null);
+  const searchboxContentRef = useRef<HTMLDivElement>(null);
   const id = useId();
   const listboxId = `search-content-${id}`;
 
@@ -139,15 +202,15 @@ export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["
         aria-controls={listboxId}
         aria-busy={searchboxState.status === "loading"}
         {...rest}
+        ref={searchboxInputRef}
         onInput={closeLastQuery}
         onChange={sendSearchQuery}
       />
 
-      {
-        (searchboxState.status !== "empty" && searchboxState.focused) &&
+      {(searchboxState.focused && searchboxState.status !== "empty") &&
         <div 
           tabIndex={-1} 
-          ref={searchboxRef} 
+          ref={searchboxContentRef} 
           className="searchbox-content"
           id={listboxId}
           role="listbox"
@@ -157,24 +220,12 @@ export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["
         >
           {
             (searchboxState.status === "loading") ?
-            <LoadingFallback className="spinner-search" size={24} />
+              <LoadingFallback className="spinner-search" size={24} />
             :
-            <>
-              {searchboxState.query?.evaluation.map((intent) => {
-                const elements = searchboxState.query!.params.elements;
-
-                /// TODO: Add support for permutations
-                /// For example, getting molar mass for two elements if we say so.
-
-                return (
-                  <SearchboxEntry key={`${intent.type}0`} elements={elements} intentEntry={intent} />
-                )
-              })}
-            </>
+              <SearchboxQueryResults query={searchboxState.query!} />
           }
         </div>
       }
-
     </div>
   )
 }
