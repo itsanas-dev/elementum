@@ -1,4 +1,3 @@
-<br />
 <div align="center">
   <picture>
     <img alt="elementum" src="images/logo.png" />
@@ -6,15 +5,14 @@
 
   <h1 align="center">Elementum</h1>
 
-  <a>
+  <span>
     <img alt="License GPL-v3" src="https://img.shields.io/badge/LICENSE-GPL_v3-brightgreen?style=for-the-badge" />
-  </a>
+  </span>
   
-  <a href="https://github.com/itsanas-dev/elementum/issues"><img src="https://img.shields.io/github/issues/itsanas-dev/elementum?style=for-the-badge&color=%23ffde47
-  " /></a>
+  <a href="https://github.com/itsanas-dev/elementum/issues"><img src="https://img.shields.io/github/issues/itsanas-dev/elementum?style=for-the-badge&color=%23ffde47" /></a>
   
   <p style="margin-top: 1rem;">
-    An interactive, fast and lightweight Periodic Table for your needs.
+    An interactive, fast and entirely local Periodic Table website.
   </p>
 
   <a target="_blank" href="https://elementumapp.vercel.app"><strong>Visit the website</strong></a>
