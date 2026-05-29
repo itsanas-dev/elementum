@@ -5,9 +5,7 @@
 
   <h1 align="center">Elementum</h1>
 
-  <span>
-    <img alt="License GPL-v3" src="https://img.shields.io/badge/LICENSE-GPL_v3-brightgreen?style=for-the-badge" />
-  </span>
+  ![License GPL-v3](https://img.shields.io/badge/LICENSE-GPL_v3-brightgreen?style=for-the-badge)
   
   <a href="https://github.com/itsanas-dev/elementum/issues"><img src="https://img.shields.io/github/issues/itsanas-dev/elementum?style=for-the-badge&color=%23ffde47" /></a>
   
@@ -54,6 +52,6 @@ Distributed under the [GNU GPL-v3 License](https://www.gnu.org/licenses/gpl-3.0.
 
 ## Acknowledgments
 
-* [Periodic Table JSON](https://github.com/Bowserinator/Periodic-Table-JSON) - For the periodic table data
+* [Periodic Table JSON](https://github.com/Bowserinator/Periodic-Table-JSON) - For the element and periodic table data
 * [Img Shields](https://shields.io) - For the shields
 * [Lucide icons](https://lucide.dev/) - For the icon pack used on the website.
