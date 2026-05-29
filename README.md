@@ -1,10 +1,15 @@
 <br />
 <div align="center">
-  <img src="images/logo.png" alt="logo" width="80" height="80">
+  <picture>
+    <img alt="elementum" src="images/logo.png" />
+  </picture>
 
   <h1 align="center">Elementum</h1>
 
-  <img src="https://img.shields.io/badge/LICENSE-GPL_v3-brightgreen?style=for-the-badge" />
+  <a>
+    <img alt="License GPL-v3" src="https://img.shields.io/badge/LICENSE-GPL_v3-brightgreen?style=for-the-badge" />
+  </a>
+  
   <a href="https://github.com/itsanas-dev/elementum/issues"><img src="https://img.shields.io/github/issues/itsanas-dev/elementum?style=for-the-badge&color=%23ffde47
   " /></a>
   

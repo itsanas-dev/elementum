@@ -66,7 +66,8 @@ export function constructMolecularFormula(table: PeriodicTableSchema, groups: El
     }
 
     if (group.type === "atom_group") {
-      s += `)${group.atomGroupCount}`;
+      s += `)`;
+      if (group.atomGroupCount > 1) s += group.atomGroupCount.toFixed(0);
     }
 
     i++;
