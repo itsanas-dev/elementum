@@ -111,7 +111,7 @@ describe("evaluateUserSearch", () => {
         expect(result!.composition).toMatchObject([{
           type: "element",
           components: [{ id: "calcium", count: 1 }],
-          count: 1
+          atomGroupCount: 1
         }]);
       });
 
@@ -197,7 +197,7 @@ describe("evaluateUserSearch", () => {
         expect(result).not.toBeNull();
         expect(result!.composition).toMatchObject([
           { type: "element",    components: [{ id: "calcium",  count: 1 }] },
-          { type: "atom_group", count: 2, components: [
+          { type: "atom_group", atomGroupCount: 2, components: [
             { id: "oxygen",   count: 1 },
             { id: "hydrogen", count: 1 },
           ]},
@@ -214,7 +214,7 @@ describe("evaluateUserSearch", () => {
         const expected: Record<string, object[]> = {
           "Ca(OH)2": [
             { type: "element",    components: [{ id: "calcium",   count: 1 }] },
-            { type: "atom_group", count: 2, components: [{ id: "oxygen", count: 1 }, { id: "hydrogen", count: 1 }] },
+            { type: "atom_group", atomGroupCount: 2, components: [{ id: "oxygen", count: 1 }, { id: "hydrogen", count: 1 }] },
           ],
           "HNO3": [
             { type: "element", components: [{ id: "hydrogen", count: 1 }] },
@@ -223,15 +223,15 @@ describe("evaluateUserSearch", () => {
           ],
           "Mg(NO3)2": [
             { type: "element",    components: [{ id: "magnesium", count: 1 }] },
-            { type: "atom_group", count: 2, components: [{ id: "nitrogen", count: 1 }, { id: "oxygen", count: 3 }] },
+            { type: "atom_group", atomGroupCount: 2, components: [{ id: "nitrogen", count: 1 }, { id: "oxygen", count: 3 }] },
           ],
           "Al(NO3)3": [
             { type: "element",    components: [{ id: "aluminium", count: 1 }] },
-            { type: "atom_group", count: 3, components: [{ id: "nitrogen", count: 1 }, { id: "oxygen", count: 3 }] },
+            { type: "atom_group", atomGroupCount: 3, components: [{ id: "nitrogen", count: 1 }, { id: "oxygen", count: 3 }] },
           ],
           "Al2(OH)6": [
             { type: "element",    components: [{ id: "aluminium", count: 2 }] },
-            { type: "atom_group", count: 6, components: [{ id: "oxygen", count: 1 }, { id: "hydrogen", count: 1 }] },
+            { type: "atom_group", atomGroupCount: 6, components: [{ id: "oxygen", count: 1 }, { id: "hydrogen", count: 1 }] },
           ],
         };
 
@@ -275,12 +275,12 @@ describe("evaluateUserSearch", () => {
     describe("integration with evaluateUserSearch", () => {
       it("should include compound elements in params", () => {
         const result = evaluateUserSearch("molar mass CaS", matchElement);
-        expect(result.params.elements[0]).toMatchObject({
+        expect(result.params.elements[0]).toEqual(expect.objectContaining({
           composition: [
-            { id: "calcium", count: 1 },
-            { id: "sulfur",  count: 1 }
+            { type: "element", components: [{id: "calcium", count: 1}], atomGroupCount: 1 },
+            { type: "element", components: [{id: "sulfur", count: 1}], atomGroupCount: 1 },
           ]
-        });
+        }));
       });
 
       it("should reject compound for schema entries that disallow them", () => {

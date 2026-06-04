@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import type { PeriodicTableSchema } from './lib/types'
-import '@/assets/css/app.css'
 import TooltipProvider from './components/provider/TooltipProvider';
 import AppProvider from './components/provider/AppProvider';
 import Topbar from './components/layout/Topbar';
 import { PeriodicTable } from './components/layout/pages/PagePeriodicTable';
+import LoadingFallback from './components/fallback/LoadingFallback';
+import '@/assets/css/app.css'
 
 const searchHelpEntries: [string, string][] = [
   ["molar mass of, mr of", "Get the molar mass of an element or compound"],
@@ -31,12 +32,57 @@ const queryExamples: string[] = [
   "room temperature state of I2"
 ]
 
+function AppContent() {
+  return (
+    <>
+      <Topbar />
+      <PeriodicTable />
+
+      <div className='section-help'>
+        <h2 className='underline'>How to search</h2>
+
+        <p className='section-line'>
+          You can query anything chemistry-related in the search box.
+        </p>
+
+        <p className="section-line">Examples include:</p>
+
+        <div className="search-help-grid">
+          {searchHelpEntries.map((entry, index) => (
+            <div className='help-entry' key={index}>
+              <code>{entry[0]}</code> - {entry[1]}
+            </div>
+          ))}
+        </div>
+
+        <p className="section-line section-paragraph-break">
+          Examples of queries include
+        </p>
+
+        <div className='search-help-grid'>
+          {queryExamples.map((entry, index) => (
+            <div className='help-entry' key={index}>
+              <code>
+                {entry}
+              </code>
+            </div>
+          ))}
+        </div>
+
+        <p className="section-line">
+          Queries are very open-ended especially when it comes to phrasing them. If you have any problems with the queries, create an issues request on the Github page.
+        </p>
+      </div>
+    </>
+  )
+}
+
 function App() {
   const [table, setTable] = useState<PeriodicTableSchema|null>(null);
 
   useEffect(() => {
     async function fetchTable() {
-      const res = await fetch("/periodic_table.json", {
+      const res = await fetch("/json/periodic_table.json", {
         method: "GET",
         headers: {
           'Accept': "application/json"
@@ -58,44 +104,7 @@ function App() {
       <TooltipProvider>
         <>
           <main>
-            <Topbar />
-            <PeriodicTable />
-
-            <div className='section-help'>
-              <h2 className='underline'>How to search</h2>
-
-              <p className='section-line'>
-                You can query anything chemistry-related in the search box.
-              </p>
-
-              <p className="section-line">Examples include:</p>
-
-              <div className="search-help-grid">
-                {searchHelpEntries.map((entry, index) => (
-                  <div className='help-entry' key={index}>
-                    <code>{entry[0]}</code> - {entry[1]}
-                  </div>
-                ))}
-              </div>
-
-              <p className="section-line section-paragraph-break">
-                Examples of queries include
-              </p>
-
-              <div className='search-help-grid'>
-                {queryExamples.map((entry, index) => (
-                  <div className='help-entry' key={index}>
-                    <code>
-                      {entry}
-                    </code>
-                  </div>
-                ))}
-              </div>
-
-              <p className="section-line">
-                Queries are very open-ended especially when it comes to phrasing them. If you have any problems with the queries, create an issues request on the Github page.
-              </p>
-            </div>
+            { table ? <AppContent /> : <LoadingFallback /> }
           </main>
         </>
 

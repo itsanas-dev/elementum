@@ -1,3 +1,5 @@
+import type { NumericQuantityType } from "./unitConversion"
+
 export type Atom = {
   id: string,
   count: number
@@ -38,7 +40,9 @@ export type SearchSchemaEntry = {
   keywords: string[],
   params: {
     allowCompounds: boolean,
+
     minElementArguments: number // The minimum number of elements required for this action to be applicable
+    quantityArguments?: Record<string, NumericQuantityType|NumericQuantityType[]>|undefined
   },
 }
 

@@ -8,12 +8,22 @@ export function displayDecimal(mass: number) {
   return mass.toFixed(3);
 }
 
-export function isDigit(s: string) {
+export function isNumeric(s: string, allowDecimals: boolean = false) {
   if (s.length === 0) return false;
+
+  let decimal = false;
 
   for (let i = 0; i < s.length; i++) {
     const n = s.charCodeAt(i);
-    if (n <= 47 || n >= 58) return false;
+
+    if (allowDecimals && n === '.'.charCodeAt(0)) {
+      if (decimal) return false;
+      
+      decimal = true;
+      continue
+    }
+    
+    if (n < '0'.charCodeAt(0) || n > '9'.charCodeAt(0)) return false;
   }
 
   return true;

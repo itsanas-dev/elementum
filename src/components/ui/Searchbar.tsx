@@ -26,7 +26,7 @@ function filterIntents(intents: SearchIntentEntry[]): SearchIntentEntry[] {
   if (intents.length < 2) return intents;
 
   const [first, ...rest] = intents;
-  const threshold = first.confidence * 0.55; // 60% of the first result must be achieved for it to show second result.
+  const threshold = first.confidence * 0.55; // 55% of the first result must be achieved for it to show second result.
 
   return [first, ...rest.filter(intent => intent.confidence >= threshold)];
 }

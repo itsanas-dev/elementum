@@ -1,16 +1,15 @@
 import type { Config, PeriodicTableSchema, TableElement } from "@/lib/types"
 import { calculateAtomicMass, constructMolecularFormula } from "./periodicTable"
-import { getDensityByConfig, getTemperatureByConfig } from "./unitConversion"
+import { getDensityByConfig, getTemperatureByConfig, type NumericQuantityType, parsePhysicalQuantity, type PhysicalQuantity } from "@/lib/unitConversion"
 import { getEmpiricalFormula } from "./empiricalFormula"
-import { displayDecimal, isDigit } from "./string"
+import { displayDecimal, isNumeric } from "./string"
 import type { ElementCompositionComponent, ParsedElement, SearchAction, SearchIntentEntry, SearchSchemaEntry } from "./searchTypes"
-
 
 type SearchWarning = | {kind: "unknown_element", token: string}
                      | {kind: "element_only_query", name: string}
                      | {kind: "argument_mismatch", received: number, expected: number, name: string }
                      | {kind: "unsupported_operation", message: string}
-
+                     | {kind: "quantity_mismatch", required: NumericQuantityType[], searchAction: string}
 
 type SearchIntentExpression = {
   action: string,
@@ -22,13 +21,13 @@ export type SearchIntent = {
   warnings?: SearchWarning[],
 
   params: {
-    elements: ParsedElement[]
+    elements: ParsedElement[],
+    quantities: PhysicalQuantity[]
   }
 }
 
 const SearchSchema: Partial<Record<SearchAction, SearchSchemaEntry>> = {
   "molar_mass": {
-    params: {minElementArguments: 1, allowCompounds: true},
     keywords: [
       "mr",
       "mass",
@@ -42,7 +41,11 @@ const SearchSchema: Partial<Record<SearchAction, SearchSchemaEntry>> = {
       "relative formula mass", 
       "atomic weight",
       "a" /// Meant to be 'A' as in the prefix of atomic number, but it has to be lowercase.
-    ]
+    ],
+    params: {
+      minElementArguments: 1, 
+      allowCompounds: true
+    }
   },
 
   "electronic_configuration_semantic": {
@@ -384,7 +387,7 @@ export function parseCompound(
 
   word = word.replace(/\s/g, "");
   if (!word || !/^[A-Za-z0-9()]+$/.test(word)) return null;
-  
+
   // First check if the word itself can be an element.
   // Before checking for compounds. This matches words like "Ca", "calcium" and others.
   const potentialElement = parseElement(word, validate);
@@ -406,7 +409,7 @@ export function parseCompound(
 
         let n = '';
 
-        while (i < word.length && isDigit(word[i])) n += word[i++];
+        while (i < word.length && isNumeric(word[i])) n += word[i++];
         
         const mult = n ? parseInt(n) : 1;
 
@@ -428,7 +431,7 @@ export function parseCompound(
         while (i < word.length && /[a-z]/.test(word[i])) symbol += word[i++];
 
         let n = '';
-        while (i < word.length && isDigit(word[i])) n += word[i++];
+        while (i < word.length && isNumeric(word[i])) n += word[i++];
         const count = n ? parseInt(n) : 1;
 
         const el = validate!(symbol);
@@ -449,7 +452,6 @@ export function parseCompound(
   }
 
   const composition = parse();
-  console.log(composition)
   if (!composition?.length) return null;
 
   return {
@@ -460,11 +462,12 @@ export function parseCompound(
 }
 
 export function evaluateUserSearch(rawQuery: string, validate?: (potentialElement: string) => string|null): SearchIntent {
-  const words = rawQuery.split(" ");
+  const words = rawQuery.trim().split(/\s+/g)
 
   const elementMap: ParsedElement[] = [];
   const filteredWords: string[] = [];
   const warnings: SearchWarning[] = [];
+  const quantities = [];
 
   let hasCompounds = false;
 
@@ -472,6 +475,7 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
     if (word.length === 0) continue;
     if (SearchStopWords.has(word)) continue;
 
+    // Evaluate compounds and elements if they are valid.
     const compound = parseCompound(word, validate)
 
     if (compound) {
@@ -480,10 +484,22 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
 
       continue
     }
+
+    // Evaluate any numerical values and units.
+    if (isNumeric(word.charAt(0), true)) {
+      const parsedQuantity = parsePhysicalQuantity(word);
+
+      if (parsedQuantity) {
+        quantities.push(parsedQuantity);
+        continue;
+      }
+    }
     
     const sanitized = word.toLowerCase().replace(/[^a-z0-9]/g, "");
     if (sanitized.length > 0) filteredWords.push(sanitized);
   }
+
+  const quantitiesSet = new Set(quantities.map((q) => q.quantityType));
 
   const ngrams = new Set<string>();
 
@@ -496,11 +512,11 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
   const searchScore: Partial<Record<SearchAction, number>> = {};
 
   for (const entryKey of Object.keys(SearchSchema)) {
-    const entry = SearchSchema[entryKey as SearchAction]!;
+    const searchEntry = SearchSchema[entryKey as SearchAction]!;
     let score = 0;
     
     /// Give the longer keywords more priority, and also to match them more greedily than smaller ones.
-    const keywords = [...entry.keywords].sort((a, b) => b.length - a.length);
+    const keywords = [...searchEntry.keywords].sort((a, b) => b.length - a.length);
     const matchedTokens = new Set<string>();
 
     /// Score the current search type by the matches.
@@ -514,7 +530,7 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
 
       if (ngrams.has(keyword)) {
         const letterLength = keyword.length;
-        score += 2 * tokens.length + 0.05 * letterLength;
+        score += 2 * tokens.length + 0.1 * letterLength;
 
         for (const token of tokens) {
           matchedTokens.add(token)
@@ -524,8 +540,18 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
 
     if (score === 0) continue;
 
+    if (searchEntry.params.quantityArguments) {
+      const argumentSet = new Set<NumericQuantityType>(Object.values(searchEntry.params.quantityArguments).flat())
+
+      if (searchEntry.params.quantityArguments && !argumentSet.isSubsetOf(quantitiesSet)) {
+        // I'm not looping over the list to get the exact arguments missing, too much work
+        warnings.push({kind: "quantity_mismatch", required: Array.from<NumericQuantityType>(argumentSet), searchAction: entryKey})
+        continue;
+      }
+    }
+
     // If we have some compound in our search, skip the actions that can't or don't allow compounds.
-    if (!entry.params.allowCompounds && hasCompounds) {
+    if (!searchEntry.params.allowCompounds && hasCompounds) {
       warnings.push({
         kind: "element_only_query",
         name: entryKey
@@ -534,10 +560,10 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
     }
 
     // Skip this entry if the elements are too few.
-    if (entry.params.minElementArguments > elementMap.length) {
+    if (searchEntry.params.minElementArguments > elementMap.length) {
       warnings.push({
         kind: "argument_mismatch",
-        expected: entry.params.minElementArguments,
+        expected: searchEntry.params.minElementArguments,
         received: elementMap.length,
         name: entryKey
       });
@@ -570,13 +596,13 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
         {type: "unknown", confidence: 1}
       ],
       warnings,
-      params: {elements: []}
+      params: {elements: [], quantities: []}
     }
   }
 
   return {
     evaluation: sortedbyConfidence,
     warnings,
-    params: { elements: elementMap }
+    params: { elements: elementMap, quantities }
   }
 }
