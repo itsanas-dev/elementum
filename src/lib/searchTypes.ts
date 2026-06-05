@@ -5,7 +5,7 @@ export type Atom = {
   count: number
 }
 
-export type ElementCompositionComponent = {
+export type FormulaComponent = {
   type: "element" | "atom_group",
 
   components: Atom[],
@@ -16,7 +16,7 @@ export type ElementCompositionComponent = {
 export type ParsedElement = {
   raw: string,
   type: "compound" | "molecule",
-  composition: ElementCompositionComponent[]
+  composition: FormulaComponent[]
 }
 
 export type SearchAction = "unknown" |
@@ -51,7 +51,7 @@ export type SearchSchemaEntry = {
   },
 }
 
-export type SearchIntentEntry = {
+export type SearchCandidate = {
   type: SearchAction,
   confidence: number,
 }

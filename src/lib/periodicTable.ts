@@ -1,6 +1,6 @@
 import { type AppTheme, type PeriodicTableSchema, type TableEntry } from "@/lib/types";
 import { AppThemes } from "./theme";
-import type { ElementCompositionComponent, ParsedElement } from "./searchTypes";
+import type { FormulaComponent, ParsedElement } from "./searchTypes";
 
 export function getEntryColour(theme: AppTheme, element: TableEntry) {
   const themeDef = AppThemes[theme] ?? AppThemes["dark"];
@@ -43,7 +43,7 @@ export function calculateAtomicMass(table: PeriodicTableSchema, parsed: ParsedEl
   return mass;
 }
 
-export function constructMolecularFormula(table: PeriodicTableSchema, groups: ElementCompositionComponent[]) {
+export function constructMolecularFormula(table: PeriodicTableSchema, groups: FormulaComponent[]) {
   let s = '';
   let i = 0;
 

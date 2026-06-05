@@ -1,6 +1,6 @@
-import type { Atom, ElementCompositionComponent } from "./searchTypes";
+import type { Atom, FormulaComponent } from "./searchTypes";
 
-function flattenComposition(composition: ElementCompositionComponent[]): Atom[] {
+function flattenComposition(composition: FormulaComponent[]): Atom[] {
   const totals = new Map<string, number>();
 
   for (const group of composition) {
@@ -15,7 +15,7 @@ function flattenComposition(composition: ElementCompositionComponent[]): Atom[] 
   return Array.from(totals.entries()).map(([id, count]) => ({ id, count }));
 }
 
-export function getEmpiricalFormula(composition: ElementCompositionComponent[]): ElementCompositionComponent[] {
+export function getEmpiricalFormula(composition: FormulaComponent[]): FormulaComponent[] {
   const duplicatesFound = hasDuplicates(composition);
 
   // This ensures that the atom groups themselves don't change.
@@ -31,7 +31,7 @@ export function getEmpiricalFormula(composition: ElementCompositionComponent[]):
 
     const gcdFactor = gcd(coefficients);
 
-    const empiricalComposition: ElementCompositionComponent[] = composition.map((group) => {
+    const empiricalComposition: FormulaComponent[] = composition.map((group) => {
       if (group.type === "element") {
         return {
           type: group.type,
@@ -56,7 +56,7 @@ export function getEmpiricalFormula(composition: ElementCompositionComponent[]):
 
   const gcdFactor = gcd(coefficients);
 
-  const empiricalComposition: ElementCompositionComponent[] = atoms.map((a) => {
+  const empiricalComposition: FormulaComponent[] = atoms.map((a) => {
     return { type: "element", components: [{ id: a.id, count: a.count / gcdFactor }], atomGroupCount: 1 };
   });
 
@@ -88,7 +88,7 @@ export function gcd(nums: number[]) {
   return nums.reduce(gcdpair);
 }
 
-export function hasDuplicates(composition: ElementCompositionComponent[]) {
+export function hasDuplicates(composition: FormulaComponent[]) {
   const elements: Record<string, boolean> = {};
 
   for (const el of composition) {

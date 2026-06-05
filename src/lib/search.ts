@@ -3,7 +3,7 @@ import { calculateAtomicMass, constructMolecularFormula } from "./periodicTable"
 import { getDensityByConfig, getTemperatureByConfig, getUnitMultiplier, type NumericQuantityType, parsePhysicalQuantity, type PhysicalQuantity } from "@/lib/unitConversion"
 import { getEmpiricalFormula } from "./empiricalFormula"
 import { displayDecimal, displayMoles, isNumeric } from "./string"
-import type { ElementCompositionComponent, ParsedElement, SearchAction, SearchIntentEntry } from "./searchTypes"
+import type { FormulaComponent, ParsedElement, SearchAction, SearchCandidate } from "./searchTypes"
 import { isStopWord, searchSchema } from "./searchDefinitions"
 
 type SearchWarning = | {kind: "unknown_element", token: string}
@@ -20,21 +20,21 @@ type PeriodicTableLookup = {
 }
 
 // god i'm so sick of naming things, the names aren't even good.
-type SearchIntentContent = {
-  intent: SearchIntentEntry,
+type SearchContext = {
+  intent: SearchCandidate,
   table: PeriodicTableLookup,
   elements: ParsedElement[],
   config: Config,
   quantities: Record<string, PhysicalQuantity>
 }
 
-type SearchIntentResult = {
+type SearchResult = {
   action: string,
   result: string
 }
 
-export type SearchIntent = {
-  evaluation: SearchIntentEntry[],
+export type SearchEvaluation = {
+  evaluation: SearchCandidate[],
   warnings?: SearchWarning[],
 
   params: {
@@ -67,8 +67,8 @@ function displayElementAttribute(table: PeriodicTableSchema, elements: ParsedEle
 // action we are performing since it's filtered out in the search algorithm.
 // Also, this code is very disgusting, maybe refactor it sometime.
 export function evaluateSearchIntent(
-  searchContent: SearchIntentContent
-): SearchIntentResult|null {
+  searchContent: SearchContext
+): SearchResult|null {
   const {table, quantities, intent, elements, config} = searchContent;
   const { allElements: allElementsTable, groupLookup, periodLookup } = table;
 
@@ -331,8 +331,8 @@ export function parseCompound(
 
   let i = 0;
 
-  function parse(): ElementCompositionComponent[] | null {
-    const result: ElementCompositionComponent[] = [];
+  function parse(): FormulaComponent[] | null {
+    const result: FormulaComponent[] = [];
 
     while (i < word.length && word[i] !== ')') {
       if (word[i] === '(') {
@@ -397,7 +397,7 @@ export function parseCompound(
   };
 }
 
-export function evaluateUserSearch(rawQuery: string, validate?: (potentialElement: string) => string|null): SearchIntent {
+export function evaluateUserSearch(rawQuery: string, validate?: (potentialElement: string) => string|null): SearchEvaluation {
   const words = rawQuery.trim().split(/\s+/g)
 
   const elementMap: ParsedElement[] = [];
@@ -547,7 +547,7 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
   
   /// Sum all of the scores to get an overall confidence probability from 0 to 1.
   /// Sort the arrays in descending search score to have the most confidence intent first.
-  const sortedbyConfidence = intentMatches.sort((a, b) => searchScore[b]! - searchScore[a]!).map<SearchIntentEntry>((match) => {
+  const sortedbyConfidence = intentMatches.sort((a, b) => searchScore[b]! - searchScore[a]!).map<SearchCandidate>((match) => {
     const score = searchScore[match]!
     
     return {

@@ -2,29 +2,29 @@ import clsx from "clsx"
 import { CircleQuestionMark, EqualIcon, Search } from "lucide-react"
 import React, { useCallback, useContext, useId, useMemo, useRef, useState, type ChangeEvent, type InputEvent, type JSX, type ReactNode } from "react"
 import "@/assets/css/searchbox.css"
-import { buildQuantityRecord, evaluateUserSearch, getIntendedArgumentCount, getQuantitiesRequiredForEntry, evaluateSearchIntent, type SearchIntent } from "@/lib/search"
+import { buildQuantityRecord, evaluateUserSearch, getIntendedArgumentCount, getQuantitiesRequiredForEntry, evaluateSearchIntent, type SearchEvaluation } from "@/lib/search"
 import LoadingFallback from "../fallback/LoadingFallback"
 import { AppContext } from "@/provider/PeriodicTableContext"
 import { ConfigContext } from "@/provider/ConfigContext"
-import type { ParsedElement, SearchIntentEntry } from "@/lib/searchTypes"
+import type { ParsedElement, SearchCandidate } from "@/lib/searchTypes"
 import type { PhysicalQuantity } from "@/lib/unitConversion"
 
 type SearchboxStatus = {
   focused: boolean,
   status: "empty" | "loading" | "fetched",
-  query: SearchIntent|null
+  query: SearchEvaluation|null
 }
 
 type SearchboxEntryProps = {
   icon: ReactNode,
-  intentEntry: SearchIntentEntry,
+  intentEntry: SearchCandidate,
   elements: ParsedElement[],
   quantities: Record<string, PhysicalQuantity>
 }
 
 // Ensures that you need a large threshold to show the other result.
 // Masks out weak words like 'EN', 'mass' and so on in place of longer terms
-function filterIntents(intents: SearchIntentEntry[]): SearchIntentEntry[] {
+function filterIntents(intents: SearchCandidate[]): SearchCandidate[] {
   if (intents.length < 2) return intents;
 
   const [first, ...rest] = intents;
@@ -65,7 +65,7 @@ const SearchboxEntry = React.memo(({ icon, quantities, intentEntry, elements }: 
   )
 })
 
-function SearchboxQueryResults({ query }: {query: SearchIntent}) {
+function SearchboxQueryResults({ query }: {query: SearchEvaluation}) {
   console.log(query);
   
   return <>
