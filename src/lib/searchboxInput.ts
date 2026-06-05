@@ -1,15 +1,3 @@
-function restoreCaretToEnd(el: HTMLDivElement) {
-  const sel = window.getSelection()
-  const range = document.createRange()
-  range.selectNodeContents(el)
-  range.collapse(false)
-
-  if (sel) {
-    sel.removeAllRanges()
-    sel.addRange(range)
-  }
-}
-
 export function handleInputSubscripts(symbolLookup: Record<string, string>|null, inputElement: HTMLDivElement) {
   if (!symbolLookup) return;
 
@@ -72,7 +60,14 @@ export function handleInputSubscripts(symbolLookup: Record<string, string>|null,
     const len = node.nodeValue.length;
 
     if (counted + len >= caretOffset) {
-      restoreCaretToEnd(inputElement);
+      const range = document.createRange()
+      range.setStart(node, caretOffset - counted)
+      range.collapse(true)
+      
+      if (sel) {
+        sel.removeAllRanges()
+        sel.addRange(range)
+      }
 
       break
     }

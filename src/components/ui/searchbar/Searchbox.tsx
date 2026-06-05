@@ -93,6 +93,16 @@ function historyChanged(symbolLookup: Record<string, string>|null, history: Sear
 
   el.textContent = text;
   handleInputSubscripts(symbolLookup, el);
+  
+  const sel = window.getSelection()
+  const range = document.createRange()
+  range.selectNodeContents(el)
+  range.collapse(false)
+
+  if (sel) {
+    sel.removeAllRanges()
+    sel.addRange(range)
+  }
 }
 
 export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["div"]) {
