@@ -7,11 +7,18 @@ export type NumericQuantityType = | "scalar"
                                   | "volume"
                                   | "percentage"
 
-type QuantityUnitData = {multiplier: number, allowPrefixes: boolean, caseSensitive: boolean}
+type QuantityUnitData = {
+  multiplier: number, 
+  prefixExponent: number, // The number of times a prefix multiplier is applied, by default it's 1. For volume, it should be 3 (m3 -> cm3 is 100*100*100) 
+  allowPrefixes: boolean, 
+  caseSensitive: boolean
+}
+
 type QuantityLookup = Record<string, QuantityUnitData>
 
 export type PhysicalQuantity = {
-  raw: string
+  raw: string,
+
   converted: number,
   quantityType: NumericQuantityType
 }
@@ -21,18 +28,12 @@ const unitPrefixes: Record<string, number> = {
   "G": 1e9,
   "M": 1e6,
   "k": 1e3,
-  "da": 10,
   "d": 0.1,
   "c": 0.01,
   "m": 1e-3,
   "u": 1e-6,
   "n": 1e-9,
   "p": 1e-12
-}
-
-// Helper function to create unit definitions.
-function unit(m: number, options?: Partial<Omit<QuantityUnitData, 'multiplier'>>): QuantityUnitData {
-  return {multiplier: m, allowPrefixes: false, caseSensitive: false, ...options}
 }
 
 const quantityUnits: Partial<Record<NumericQuantityType, QuantityLookup>> = {
@@ -54,7 +55,7 @@ const quantityUnits: Partial<Record<NumericQuantityType, QuantityLookup>> = {
     "lb": unit(453.6),
     "ounce": unit(28.35),
 
-    "theresNoWayAnyoneWouldFindThisButIfYouDidHi": unit(1234567890, {allowPrefixes: true, caseSensitive: true})
+    "theresNoWayAnyoneWouldFindThisButIfYouDidHello": unit(1234567890, {allowPrefixes: true, prefixExponent: 0.5, caseSensitive: true})
   },
 
   "mole": {
@@ -65,7 +66,7 @@ const quantityUnits: Partial<Record<NumericQuantityType, QuantityLookup>> = {
 
   "volume": {
     // Base unit is m3.
-    "m3": unit(1, { allowPrefixes: true, caseSensitive: true }),
+    "m3": unit(1, { allowPrefixes: true, prefixExponent: 3, caseSensitive: true }),
     "l": unit(1e-3, { allowPrefixes: true }),
     "liter": unit(1e-3),
     "litre": unit(1e-3),
@@ -83,7 +84,12 @@ const quantityUnits: Partial<Record<NumericQuantityType, QuantityLookup>> = {
   }
 }
 
-function getQuantityMultiplier(unitString: string): {mult: number, name: NumericQuantityType}|null {
+// Helper function to create unit definitions.
+function unit(m: number, options?: Partial<Omit<QuantityUnitData, 'multiplier'>>): QuantityUnitData {
+  return {multiplier: m, allowPrefixes: false, caseSensitive: false, prefixExponent: 1, ...options}
+}
+
+export function getUnitMultiplier(unitString: string): {mult: number, name: NumericQuantityType}|null {
   if (unitString.length === 0) return {mult: 1, name: "scalar"};
   
   // Note: Please have no units that end with the letter 's'.
@@ -111,7 +117,7 @@ function getQuantityMultiplier(unitString: string): {mult: number, name: Numeric
       const quantity = (unit.caseSensitive ? noPrefixQuantity : noPrefixQuantity.toLowerCase());
 
       if (quantity === unitPrefix) {
-        return {mult: unit.multiplier * potentialPrefix, name: quantityName as NumericQuantityType}
+        return {mult: unit.multiplier * Math.pow(potentialPrefix, unit.prefixExponent), name: quantityName as NumericQuantityType}
       }
     }
   }
@@ -119,12 +125,12 @@ function getQuantityMultiplier(unitString: string): {mult: number, name: Numeric
   return null;
 }
 
-export function convertQuantityTo(amount: number, unit: string) {
-  const targetQuantity = getQuantityMultiplier(unit);
+export function convertQuantityToUnit(amountBase: number, unit: string) {
+  const targetQuantity = getUnitMultiplier(unit);
 
   if (!targetQuantity) return null;
 
-  return amount * targetQuantity.mult;
+  return amountBase * targetQuantity.mult;
 }
 
 export function parsePhysicalQuantity(input: string): PhysicalQuantity|null {
@@ -168,7 +174,7 @@ export function parsePhysicalQuantity(input: string): PhysicalQuantity|null {
   // Unnecessary check if the previous few are correct. But we are being thorough.
   if (Number.isNaN(parsed)) return null;
 
-  const quantity = getQuantityMultiplier(unit);
+  const quantity = getUnitMultiplier(unit);
 
   if (!quantity) return null;
 

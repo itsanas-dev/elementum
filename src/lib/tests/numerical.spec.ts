@@ -142,6 +142,10 @@ describe("parsePhysicalQuantity", () => {
     it("parses kl: 1kL = 1m3", () => {
       expect(parsePhysicalQuantity("1kL")).toEqual(expect.objectContaining({ converted: 1, quantityType: "volume" }))
     })
+
+    it("parses 1cm3: 1cm3 = 0.000001m3", () => {
+      expect(parsePhysicalQuantity("1cm3")).toEqual(expect.objectContaining({ converted: expect.closeTo(1e-6, 6), quantityType: "volume" }))
+    })
   });
 
   describe("fake units", () => {

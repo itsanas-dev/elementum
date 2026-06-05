@@ -1,17 +1,34 @@
 import type { Config, PeriodicTableSchema, TableElement } from "@/lib/types"
 import { calculateAtomicMass, constructMolecularFormula } from "./periodicTable"
-import { getDensityByConfig, getTemperatureByConfig, type NumericQuantityType, parsePhysicalQuantity, type PhysicalQuantity } from "@/lib/unitConversion"
+import { getDensityByConfig, getTemperatureByConfig, getUnitMultiplier, type NumericQuantityType, parsePhysicalQuantity, type PhysicalQuantity } from "@/lib/unitConversion"
 import { getEmpiricalFormula } from "./empiricalFormula"
-import { displayDecimal, isNumeric } from "./string"
-import type { ElementCompositionComponent, ParsedElement, SearchAction, SearchIntentEntry, SearchSchemaEntry } from "./searchTypes"
+import { displayDecimal, displayMoles, isNumeric } from "./string"
+import type { ElementCompositionComponent, ParsedElement, SearchAction, SearchIntentEntry } from "./searchTypes"
+import { isStopWord, searchSchema } from "./searchDefinitions"
 
 type SearchWarning = | {kind: "unknown_element", token: string}
                      | {kind: "element_only_query", name: string}
                      | {kind: "argument_mismatch", received: number, expected: number, name: string }
                      | {kind: "unsupported_operation", message: string}
                      | {kind: "quantity_mismatch", required: NumericQuantityType[], searchAction: string}
+                     | {kind: "unexpected_quantity", actionName: string}
 
-type SearchIntentExpression = {
+type PeriodicTableLookup = {
+  allElements: PeriodicTableSchema,
+  groupLookup: Record<number, string[]>|null,
+  periodLookup: Record<number, string[]>|null,
+}
+
+// god i'm so sick of naming things, the names aren't even good.
+type SearchIntentContent = {
+  intent: SearchIntentEntry,
+  table: PeriodicTableLookup,
+  elements: ParsedElement[],
+  config: Config,
+  quantities: Record<string, PhysicalQuantity>
+}
+
+type SearchIntentResult = {
   action: string,
   result: string
 }
@@ -26,190 +43,6 @@ export type SearchIntent = {
   }
 }
 
-const SearchSchema: Partial<Record<SearchAction, SearchSchemaEntry>> = {
-  "molar_mass": {
-    keywords: [
-      "mr",
-      "mass",
-      "molecular mass",
-      "molecule mass",
-      "atomic mass",
-      "molar mass", 
-      "relative mass", 
-      "nucleon number", 
-      "relative molecular mass", 
-      "relative formula mass", 
-      "atomic weight",
-      "a" /// Meant to be 'A' as in the prefix of atomic number, but it has to be lowercase.
-    ],
-    params: {
-      minElementArguments: 1, 
-      allowCompounds: true
-    }
-  },
-
-  "electronic_configuration_semantic": {
-    params: {minElementArguments: 1, allowCompounds: false},
-    keywords: [
-      "short electronic configuration",
-      "shorthand electron",
-      "semantic electron",
-      "semantic electronic configuration",
-      "electronic configuration", 
-      "electronic structure", 
-      "electron arrangement",
-      "electronic",
-      "electron",
-      "electrons",
-      "configuration",
-      "electron configuration",
-      "orbital configuration",
-      "atomic configuration",
-      "electron distribution"
-    ],
-  },
-
-  "electronic_configuration_full": {
-    params: {minElementArguments: 1, allowCompounds: false},
-    keywords: [
-      "full electronic configuration",
-      "electronic configuration", 
-      "electronic structure", 
-      "electron arrangement",
-      "electronic",
-      "electron",
-      "electrons",
-      "configuration",
-      "electron configuration",
-      "full orbital configuration",
-      "orbital configuration",
-      "full atomic configuration",
-      "atomic configuration",
-      "electron distribution"
-    ],
-  },
-
-  "element_density": {
-    params: {minElementArguments: 1, allowCompounds: false},
-    keywords: ["density", "dense", "heavy"]
-  },
-
-  "element_group": {
-    keywords: [
-      "group",
-      "family",
-      "column",
-      "valence electron number"
-    ],
-    params: {minElementArguments: 1, allowCompounds: false}
-  },
-
-  "element_period": {
-    keywords: [
-      "period",
-      "principal quantum level",
-      "shell number",
-      "row" 
-    ],
-    params: {minElementArguments: 1, allowCompounds: false}
-  },
-
-  "element_state": {
-    keywords: [
-      "physical state",
-      "state",
-      "state at rtp",
-      "state at room temperature",
-      "matter"
-    ],
-    params: {minElementArguments: 1, allowCompounds: false} /// Unfortunately, we don't have physical state info on compounds.
-  },
-  
-  "atomic_number": {
-    keywords: [
-      "atomic number",
-      "proton number",
-      "proton",
-      "z", /// Meant to be 'Z' as in the acronym for atomic number, but it's meant to be lowercase
-      "number",
-      "shell electrons"
-    ],
-
-    params: {minElementArguments: 1, allowCompounds: false}
-  },
-
-  "element_mp": {
-    keywords: [
-      "melting point", "mp",
-      "melting", "melt", 
-      "freezing point", "fusion temperature",
-      "softening point"
-    ],
-
-    params: {minElementArguments: 1, allowCompounds: false}
-  },
-
-  "element_bp": {
-    keywords: [
-      "boil", "bp", "boiling", "boiling point",
-      "vaporization", "vapourization", "vapourization point",
-      "point of formation of vapour"
-    ],
-    params: {minElementArguments: 1, allowCompounds: false}
-  },
-
-  "element_appearance": {
-    keywords: [
-      "appearance", "look", "looks", "appear"
-    ],
-    params: {minElementArguments: 1, allowCompounds: false}
-  },
-  
-  "element_electronaffinity": {
-    keywords: [
-      "electron affinity", "electroaffinity", "affinity",
-      "e- affinity", "e-affinity"
-    ],
-
-    params: {minElementArguments: 1, allowCompounds: false}
-  },
-
-  "electronegativity": {
-    keywords: [
-      "electronegativity", "en", "atom en", "atom electronegativity"
-    ],
-
-    params: {minElementArguments: 1, allowCompounds: false}
-  },
-
-  "empirical_formula": {
-    keywords: [
-      "empirical formula", "emp formula", "empirical",
-      "simplest formula", "compositional formula", "stoichometric formula",
-      "compositional", "stoichometric"
-    ],
-
-    params: {minElementArguments: 1, allowCompounds: true}
-  },
-
-  "bond_electronegativity": {
-    keywords: [
-      "en", "electronegativity", "electronegative difference",
-      "en difference", "electronegativity difference", "en diff",
-      "electronegative diff", "electronegativity pauling", "en pauling"
-    ],
-
-    params: {minElementArguments: 2, allowCompounds: false}
-  }
-} as const;
-
-const SearchStopWords = new Set([
-  "what", "of", "is", "the", "and", "be", "no",
-  "for", "to", "in", "give", "show", "display", "why", "are",
-  "were", "was", "there"
-]);
-
-
 function getNthElement(list: ParsedElement[], n: number) {
   if (n >= list.length) return null;
 
@@ -220,16 +53,6 @@ function getNthElement(list: ParsedElement[], n: number) {
   if (el.composition[0].components.length === 0) return null;
 
   return el.composition[0].components[0]
-}
-
-export function getIntendedArgumentCount(intentType: SearchAction) {
-  if (intentType === "unknown") return -1;
-
-  const entry = SearchSchema[intentType];
-
-  if (!entry) return -1;
-
-  return entry.params.minElementArguments;
 }
 
 function displayElementAttribute(table: PeriodicTableSchema, elements: ParsedElement[], attributeText: (el: TableElement) => string, responseText: (el: TableElement) => string, elementIndex: number = 0) {
@@ -243,15 +66,15 @@ function displayElementAttribute(table: PeriodicTableSchema, elements: ParsedEle
 // Type-checking here is sparse because we can be reasonably sure that the elements do exist for the
 // action we are performing since it's filtered out in the search algorithm.
 // Also, this code is very disgusting, maybe refactor it sometime.
-export function getSearchExpression(
-  table: PeriodicTableSchema, 
-  intent: SearchIntentEntry, 
-  elements: ParsedElement[],
-  config: Config
-): SearchIntentExpression|null {
+export function evaluateSearchIntent(
+  searchContent: SearchIntentContent
+): SearchIntentResult|null {
+  const {table, quantities, intent, elements, config} = searchContent;
+  const { allElements: allElementsTable, groupLookup, periodLookup } = table;
+
   switch (intent.type) {
     case "atomic_number": 
-      return displayElementAttribute(table, elements, 
+      return displayElementAttribute(allElementsTable, elements, 
         (el) => `The atomic number of ${el.symbol} is`,
         (el) => el.number.toFixed(0)
       )
@@ -259,66 +82,66 @@ export function getSearchExpression(
     case "molar_mass":
       return {
         action: `The atomic mass of ${elements[0].raw} is`,
-        result: `${displayDecimal(calculateAtomicMass(table, elements))} g/mol`
+        result: `${displayDecimal(calculateAtomicMass(allElementsTable, elements[0]))} g/mol`
       }
       
     case "element_density":
-      return displayElementAttribute(table, elements, 
+      return displayElementAttribute(allElementsTable, elements, 
         (el) => `The density of ${el.symbol} is`,
         (el) => el.density ? getDensityByConfig(el.density, config.preferredDensityUnit) : "Unknown"
       );
 
     case "electronic_configuration_semantic":
     case "electronic_configuration_full": 
-      return displayElementAttribute(table, elements, 
+      return displayElementAttribute(allElementsTable, elements, 
         (el) => `The electronic configuration of ${el.symbol} is`,
         (el) => (intent.type === "electronic_configuration_full") ? el.electron_configuration : el.electron_configuration_semantic
       )
 
     case "element_group":
-      return displayElementAttribute(table, elements,
+      return displayElementAttribute(allElementsTable, elements,
         (el) => `The group of ${el.symbol} is`,
         (el) => `Group ${el.group}`
       )
 
     case "element_period":
-      return displayElementAttribute(table, elements,
+      return displayElementAttribute(allElementsTable, elements,
         (el) => `The period of ${el.symbol} is`,
         (el) => `Period ${el.period}`
       )
 
     case "element_state":
-      return displayElementAttribute(table, elements,
+      return displayElementAttribute(allElementsTable, elements,
         (el) => `The physical state (at r.t.p) of ${el.symbol} is`,
         (el) => `${el.state}`
       )
 
     case "element_mp":
-      return displayElementAttribute(table, elements,
+      return displayElementAttribute(allElementsTable, elements,
         (el) => `The melting point of ${el.symbol} is`,
         (el) => el.melt ? getTemperatureByConfig(el.melt, config.preferredTemperatureUnit) : "Unknown"
       )
 
     case "element_bp":
-      return displayElementAttribute(table, elements,
+      return displayElementAttribute(allElementsTable, elements,
         (el) => `The boiling point of ${el.symbol} is`,
         (el) => el.boil ? getTemperatureByConfig(el.boil, config.preferredTemperatureUnit) : "Unknown"
       )
     
     case "element_appearance":
-      return displayElementAttribute(table, elements,
+      return displayElementAttribute(allElementsTable, elements,
         (el) => `The appearance of ${el.symbol} is`,
         (el) => el.appearance || "Unknown"
       )
 
     case "element_electronaffinity":
-      return displayElementAttribute(table, elements,
+      return displayElementAttribute(allElementsTable, elements,
         (el) => `The electron affinity of ${el.symbol} is`,
         (el) => `${el.electron_affinity.toFixed(2)} kJ/mol`
       )
 
     case "electronegativity":
-      return displayElementAttribute(table, elements, 
+      return displayElementAttribute(allElementsTable, elements, 
         (el) => `The electronegativity of ${el.symbol} is`,
         (el) => `${el.electronegativity_pauling}`
       )
@@ -326,7 +149,7 @@ export function getSearchExpression(
     case "empirical_formula": {
       const element = elements[0];
       const empiricalComposition = getEmpiricalFormula(element.composition);
-      const empiricalFormula = constructMolecularFormula(table, empiricalComposition);
+      const empiricalFormula = constructMolecularFormula(allElementsTable, empiricalComposition);
 
       if (!empiricalFormula) return null;
 
@@ -337,8 +160,8 @@ export function getSearchExpression(
     }
 
     case "bond_electronegativity": {
-      const element1 = table[getNthElement(elements, 0)!.id]!;
-      const element2 = table[getNthElement(elements, 1)!.id]!;
+      const element1 = allElementsTable[getNthElement(elements, 0)!.id]!;
+      const element2 = allElementsTable[getNthElement(elements, 1)!.id]!;
 
       if (element1.type !== "element" || element2.type !== "element") return null;
 
@@ -351,13 +174,107 @@ export function getSearchExpression(
         action: `The E.N difference in ${element1.symbol}-${element2.symbol} bond is`,
         result: `${enDiff.toFixed(2)}${suffix}`
       }
-    } 
+    }
+
+    // Beware of 'floating point precision'. Fuck floating-points.
+    // TODO: Add warning of floating-point imprecision in these two actions.
+    case "mass_in_moles": {
+      const substance = elements[0];
+      const moleCount = quantities.compoundMoles.converted;
+      const molarMass = calculateAtomicMass(allElementsTable, substance);
+
+      const mass = molarMass * moleCount;
+
+      return {
+        action: `The mass of ${quantities.compoundMoles.raw} of ${substance.raw} is`,
+        result: `${displayDecimal(mass)} g`
+      }
+    }
+
+    case "moles_in_mass": {
+      const substance = elements[0];
+      const molarMass = calculateAtomicMass(allElementsTable, substance);
+
+      // Evil 'floating point imprecision' hack fix.
+      const moles = parseFloat((quantities.compoundMass.converted / molarMass).toPrecision(10));
+      
+      return {
+        action: `The moles in ${quantities.compoundMass.raw} of ${substance.raw} is`,
+        result: `${displayMoles(moles)} mol`
+      }
+    }
+
+    case "elements_in_group": {
+      const group = quantities.group.converted;
+
+      if (!groupLookup) return null;
+      if (!Number.isInteger(group) || (group < 1 || group > 18)) return null;
+
+      const elements = groupLookup[group];
+
+      if (!elements) return null;
+
+      const elementsBySymbol = elements.map((id) => {
+        const el = allElementsTable[id]!;
+
+        if (el.type !== "element") return "ignore this";
+
+        return el.symbol;
+      })
+
+      return {
+        action: `The elements in group ${group.toFixed(0)} are`,
+        result: `${elementsBySymbol.join(",  ")}`
+      }
+    }
+
+    case "elements_in_period": {
+      const period = quantities.period.converted;
+
+      if (!periodLookup) return null;
+      if (!Number.isInteger(period) || (period < 1 || period > 8)) return null;
+
+      const elements = periodLookup[period];
+
+      if (!elements) return null;
+
+      const elementsBySymbol = elements.map((id) => {
+        const el = allElementsTable[id]!;
+
+        if (el.type !== "element") return "ignore this";
+
+        return el.symbol;
+      })
+
+      return {
+        action: `The elements in period ${period.toFixed(0)} are`,
+        result: `${elementsBySymbol.join(",  ")}`
+      }
+    }
 
     case "unknown":
       return {result: "Waiting for something to happen?", action: "Your search was too vague. Please try again."}
     default:
       return {result: "Oops, we have messed up somewhere.", action: `Unsupported operation "${intent.type}"`}
   }
+}
+
+export function getQuantitiesRequiredForEntry(intentType: SearchAction): Record<string, NumericQuantityType|NumericQuantityType[]>|null {
+  if (intentType === "unknown") return null;
+
+  const entry = searchSchema[intentType];
+
+  return entry?.params.quantityArguments || null;
+}
+
+export function getIntendedArgumentCount(intentType: SearchAction) {
+  if (intentType === "unknown") return -1;
+
+  const entry = searchSchema[intentType];
+
+  if (!entry) return -1;
+
+  return entry.params.minElementArguments;
 }
 
 function arraySum(a: number[]) {
@@ -377,6 +294,25 @@ function parseElement(word: string, validate?: (symbolOrName: string) => string 
   const id = validate?.(word);
 
   return id ? {raw: word, type: "molecule", composition: [{type: "element", components: [{id, count: 1}], atomGroupCount: 1}]} : null
+}
+
+export function buildQuantityRecord(
+  quantities: PhysicalQuantity[],
+  requiredQuantityArguments: Record<string, NumericQuantityType|NumericQuantityType[]>
+): Record<string, PhysicalQuantity> {
+  const record: Record<string, PhysicalQuantity> = {};
+  const usedIndices = new Set<number>();
+
+  for (const [argName, expected] of Object.entries(requiredQuantityArguments)) {
+    const acceptedTypes = Array.isArray(expected) ? expected : [expected];
+
+    const match = quantities.findIndex((q, index) => !usedIndices.has(index) && acceptedTypes.includes(q.quantityType));
+
+    record[argName] = quantities[match];
+    usedIndices.add(match);
+  }
+
+  return record;
 }
 
 export function parseCompound(
@@ -470,26 +406,50 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
   const quantities = [];
 
   let hasCompounds = false;
+  let i = 0;
 
-  for (const word of words) {
+  while (i < words.length) {
+    const word = words[i++]
+
     if (word.length === 0) continue;
-    if (SearchStopWords.has(word)) continue;
-
+    if (isStopWord(word)) continue;
+  
     // Evaluate compounds and elements if they are valid.
     const compound = parseCompound(word, validate)
-
+  
     if (compound) {
       hasCompounds = (hasCompounds || compound.type === "compound");
       elementMap.push(compound);
-
+  
       continue
     }
-
+  
     // Evaluate any numerical values and units.
     if (isNumeric(word.charAt(0), true)) {
       const parsedQuantity = parsePhysicalQuantity(word);
-
+  
       if (parsedQuantity) {
+        // We could have added a space between the numeric value and the unit
+        // Crude check for this case by checking the next word and if its a unit, we apply multiplier and change type.
+        if (parsedQuantity.quantityType === "scalar" && i + 1 < words.length) {
+          const potentialUnit = words[i];
+
+          if (!isNumeric(potentialUnit.charAt(0), true)) {
+            const unitMult = getUnitMultiplier(potentialUnit);
+            console.log(potentialUnit, unitMult);
+            
+  
+            if (unitMult) {
+              i++;
+  
+              parsedQuantity.quantityType = unitMult.name;
+              parsedQuantity.converted *= unitMult.mult;
+              parsedQuantity.raw += `${potentialUnit}`
+            }
+          }
+
+        }
+
         quantities.push(parsedQuantity);
         continue;
       }
@@ -511,8 +471,7 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
 
   const searchScore: Partial<Record<SearchAction, number>> = {};
 
-  for (const entryKey of Object.keys(SearchSchema)) {
-    const searchEntry = SearchSchema[entryKey as SearchAction]!;
+  for (const [entryKey, searchEntry] of Object.entries(searchSchema)) {
     let score = 0;
     
     /// Give the longer keywords more priority, and also to match them more greedily than smaller ones.
@@ -548,6 +507,11 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
         warnings.push({kind: "quantity_mismatch", required: Array.from<NumericQuantityType>(argumentSet), searchAction: entryKey})
         continue;
       }
+    } else if (quantitiesSet.size > 0) {
+      // Unlike elements, we aren't lenient with the number or presence of numerical values
+      // in non-numeric search queries because words can overlap.
+      warnings.push({kind: "unexpected_quantity", actionName: entryKey})
+      continue;
     }
 
     // If we have some compound in our search, skip the actions that can't or don't allow compounds.
@@ -559,8 +523,11 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
       continue;
     }
 
-    // Skip this entry if the elements are too few.
-    if (searchEntry.params.minElementArguments > elementMap.length) {
+    // Skip this entry if the elements are too few, or if we don't have exact numbers when we need exact numbers.
+    if (
+      (!searchEntry.params.needsExactElementArguments && searchEntry.params.minElementArguments > elementMap.length) ||
+      (searchEntry.params.needsExactElementArguments && searchEntry.params.minElementArguments !== elementMap.length)
+    ) {
       warnings.push({
         kind: "argument_mismatch",
         expected: searchEntry.params.minElementArguments,
@@ -596,7 +563,7 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
         {type: "unknown", confidence: 1}
       ],
       warnings,
-      params: {elements: [], quantities: []}
+      params: {elements: [], quantities}
     }
   }
 
@@ -606,3 +573,4 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
     params: { elements: elementMap, quantities }
   }
 }
+

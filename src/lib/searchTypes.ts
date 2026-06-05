@@ -34,14 +34,19 @@ export type SearchAction = "unknown" |
                            "element_appearance" |
                            "electronegativity" |
                            "empirical_formula" |
-                           "bond_electronegativity"
+                           "bond_electronegativity" |
+                           "mass_in_moles" |
+                           "moles_in_mass" |
+                           "elements_in_group" |
+                           "elements_in_period" |
+                           "empirical_formula_by_composition"
 
 export type SearchSchemaEntry = {
   keywords: string[],
   params: {
     allowCompounds: boolean,
-
-    minElementArguments: number // The minimum number of elements required for this action to be applicable
+    minElementArguments: number, // The minimum number of elements required for this action to be applicable if 'needsExactElementArguments' is not set.
+    needsExactElementArguments?: boolean,
     quantityArguments?: Record<string, NumericQuantityType|NumericQuantityType[]>|undefined
   },
 }

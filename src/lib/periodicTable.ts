@@ -23,23 +23,21 @@ export function getEntryColour(theme: AppTheme, element: TableEntry) {
   return themeDef.unknown;
 }
 
-export function calculateAtomicMass(table: PeriodicTableSchema, parsed: ParsedElement[]) {
+export function calculateAtomicMass(table: PeriodicTableSchema, parsed: ParsedElement) {
   let mass = 0;
 
-  for (const element of parsed) {
-    for (const component of element.composition) {
-      let groupMass = 0;
+  for (const component of parsed.composition) {
+    let groupMass = 0;
 
-      for (const entry of component.components) {
-        const element = table[entry.id];
+    for (const entry of component.components) {
+      const element = table[entry.id];
 
-        if (!element || element.type !== "element") return -1;
-        
-        groupMass += element.atomic_mass * entry.count
-      }
-
-      mass += groupMass * component.atomGroupCount
+      if (!element || element.type !== "element") return -1;
+      
+      groupMass += element.atomic_mass * entry.count
     }
+
+    mass += groupMass * component.atomGroupCount
   }
 
   return mass;

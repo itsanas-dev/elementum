@@ -1,11 +1,23 @@
-export function displayDecimal(mass: number) {
+export function displayDecimal(mass: number, decimals: number = 3, epsilon: number = 1e-3) {
   const dpart = mass % 1;
 
-  if (Math.abs(dpart) <= 1e-3) {
+  if (Math.abs(dpart) <= epsilon) {
     return mass.toFixed(1);
   }
 
-  return mass.toFixed(3);
+  return mass.toFixed(decimals);
+}
+
+export function displayMoles(moles: number, epsilon: number = 1e-9) {
+  const dpart = moles % 1;
+
+  if (Math.abs(dpart) <= epsilon) {
+    return moles.toFixed(1);
+  }
+
+  if (moles < 0.01) return moles.toFixed(5);
+  if (moles < 0.1) return moles.toFixed(4);
+  return moles.toFixed(3);
 }
 
 export function isNumeric(s: string, allowDecimals: boolean = false) {

@@ -2,11 +2,12 @@ import clsx from "clsx"
 import { CircleQuestionMark, EqualIcon, Search } from "lucide-react"
 import React, { useCallback, useContext, useId, useMemo, useRef, useState, type ChangeEvent, type InputEvent, type JSX, type ReactNode } from "react"
 import "@/assets/css/searchbox.css"
-import { evaluateUserSearch, getIntendedArgumentCount, getSearchExpression, type SearchIntent } from "@/lib/search"
+import { buildQuantityRecord, evaluateUserSearch, getIntendedArgumentCount, getQuantitiesRequiredForEntry, evaluateSearchIntent, type SearchIntent } from "@/lib/search"
 import LoadingFallback from "../fallback/LoadingFallback"
 import { AppContext } from "@/provider/PeriodicTableContext"
 import { ConfigContext } from "@/provider/ConfigContext"
 import type { ParsedElement, SearchIntentEntry } from "@/lib/searchTypes"
+import type { PhysicalQuantity } from "@/lib/unitConversion"
 
 type SearchboxStatus = {
   focused: boolean,
@@ -17,7 +18,8 @@ type SearchboxStatus = {
 type SearchboxEntryProps = {
   icon: ReactNode,
   intentEntry: SearchIntentEntry,
-  elements: ParsedElement[]
+  elements: ParsedElement[],
+  quantities: Record<string, PhysicalQuantity>
 }
 
 // Ensures that you need a large threshold to show the other result.
@@ -31,10 +33,16 @@ function filterIntents(intents: SearchIntentEntry[]): SearchIntentEntry[] {
   return [first, ...rest.filter(intent => intent.confidence >= threshold)];
 }
 
-const SearchboxEntry = React.memo(({ icon, intentEntry, elements }: SearchboxEntryProps) => {
-  const {elementTable} = useContext(AppContext);
+const SearchboxEntry = React.memo(({ icon, quantities, intentEntry, elements }: SearchboxEntryProps) => {
+  const { elementTable, groupLookup, periodLookup } = useContext(AppContext);
   const { preferredDensityUnit, preferredTemperatureUnit } = useContext(ConfigContext);
-  const evaluation = useMemo(() => getSearchExpression(elementTable!, intentEntry, elements, {preferredDensityUnit, preferredTemperatureUnit}), [preferredDensityUnit, preferredTemperatureUnit])
+  const evaluation = useMemo(() => evaluateSearchIntent({
+    config: {preferredDensityUnit, preferredTemperatureUnit},
+    elements,
+    intent: intentEntry,
+    quantities,
+    table: {allElements: elementTable!, groupLookup, periodLookup}
+  }), [preferredDensityUnit, preferredTemperatureUnit, elementTable, groupLookup, periodLookup])
   
   if (!evaluation) return null;
 
@@ -58,10 +66,14 @@ const SearchboxEntry = React.memo(({ icon, intentEntry, elements }: SearchboxEnt
 })
 
 function SearchboxQueryResults({ query }: {query: SearchIntent}) {
+  console.log(query);
+  
   return <>
     {query && filterIntents(query.evaluation).map((intent) => {
       const elements = query.params.elements;
+      const quantitiesRequired = getQuantitiesRequiredForEntry(intent.type);
       const argumentCount = getIntendedArgumentCount(intent.type);
+      const quantities = quantitiesRequired ? buildQuantityRecord(query.params.quantities, quantitiesRequired) : {};
 
       // Get a max of 4 permutations of a single-argument function
       // If you have more than 1 element provided.
@@ -83,7 +95,8 @@ function SearchboxQueryResults({ query }: {query: SearchIntent}) {
                   <CircleQuestionMark className="icon-noshrink" size={20} /> 
                   : 
                   <EqualIcon className="icon-noshrink" size={20} aria-hidden />
-                } 
+                }
+                quantities={quantities}
                 intentEntry={intent} 
               />
             ))}
@@ -100,8 +113,9 @@ function SearchboxQueryResults({ query }: {query: SearchIntent}) {
             : 
             <EqualIcon className="icon-noshrink" size={20} aria-hidden />
           }
+          quantities={quantities}
           elements={elements} 
-          intentEntry={intent} 
+          intentEntry={intent}  
         />
       )
     })}
