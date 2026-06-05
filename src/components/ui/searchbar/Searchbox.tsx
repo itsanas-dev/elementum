@@ -1,13 +1,13 @@
 import clsx from "clsx"
 import { CircleQuestionMark, EqualIcon, Search } from "lucide-react"
-import React, { useCallback, useContext, useId, useMemo, useRef, useState, type ChangeEvent, type InputEvent, type JSX, type ReactNode } from "react"
-import "@/assets/css/searchbox.css"
-import { buildQuantityRecord, evaluateUserSearch, getIntendedArgumentCount, getQuantitiesRequiredForEntry, evaluateSearchIntent, type SearchEvaluation } from "@/lib/search"
-import LoadingFallback from "../fallback/LoadingFallback"
+import { useCallback, useContext, useId, useRef, useState, type InputEvent, type JSX, type KeyboardEvent } from "react"
+import { buildQuantityRecord, evaluateUserSearch, getIntendedArgumentCount, getQuantitiesRequiredForEntry, type SearchEvaluation } from "@/lib/search"
+import LoadingFallback from "../../fallback/LoadingFallback"
 import { AppContext } from "@/provider/PeriodicTableContext"
-import { ConfigContext } from "@/provider/ConfigContext"
-import type { ParsedElement, SearchCandidate } from "@/lib/searchTypes"
-import type { PhysicalQuantity } from "@/lib/unitConversion"
+import type { SearchCandidate } from "@/lib/searchTypes"
+import { SearchboxEntry } from "./SearchboxEntry"
+import { handleInputSubscripts } from "@/lib/searchboxInput"
+import "@/assets/css/searchbox.css"
 
 type SearchboxStatus = {
   focused: boolean,
@@ -15,11 +15,9 @@ type SearchboxStatus = {
   query: SearchEvaluation|null
 }
 
-type SearchboxEntryProps = {
-  icon: ReactNode,
-  intentEntry: SearchCandidate,
-  elements: ParsedElement[],
-  quantities: Record<string, PhysicalQuantity>
+type SearchboxHistory = {
+  timeline: string[],
+  pointer: number
 }
 
 // Ensures that you need a large threshold to show the other result.
@@ -32,38 +30,6 @@ function filterIntents(intents: SearchCandidate[]): SearchCandidate[] {
 
   return [first, ...rest.filter(intent => intent.confidence >= threshold)];
 }
-
-const SearchboxEntry = React.memo(({ icon, quantities, intentEntry, elements }: SearchboxEntryProps) => {
-  const { elementTable, groupLookup, periodLookup } = useContext(AppContext);
-  const { preferredDensityUnit, preferredTemperatureUnit } = useContext(ConfigContext);
-  const evaluation = useMemo(() => evaluateSearchIntent({
-    config: {preferredDensityUnit, preferredTemperatureUnit},
-    elements,
-    intent: intentEntry,
-    quantities,
-    table: {allElements: elementTable!, groupLookup, periodLookup}
-  }), [preferredDensityUnit, preferredTemperatureUnit, elementTable, groupLookup, periodLookup])
-  
-  if (!evaluation) return null;
-
-  return (
-    <button aria-label={`${evaluation.action} ${evaluation.result}`} className="searchbox-entry-wrapper">
-      {icon}
-      <div className="searchbox-entry" aria-hidden>
-        {
-          (evaluation.action && evaluation.action.length > 0) && 
-          <p className="searchbox-expression text-muted">{evaluation.action}</p>
-        }
-
-        {
-          (evaluation.result && evaluation.result.length > 0) && 
-          <h2 className="searchbox-result">{evaluation.result}</h2>
-        }
-
-      </div>
-    </button>
-  )
-})
 
 function SearchboxQueryResults({ query }: {query: SearchEvaluation}) {
   console.log(query);
@@ -122,14 +88,44 @@ function SearchboxQueryResults({ query }: {query: SearchEvaluation}) {
   </>
 }
 
-export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["input"]) {
+function historyChanged(symbolLookup: Record<string, string>|null, history: SearchboxHistory, el: HTMLDivElement) {
+  const text = history.timeline[history.pointer];
+
+  el.textContent = text;
+  handleInputSubscripts(symbolLookup, el);
+}
+
+export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["div"]) {
   const { elementTable, elementSymbolLookup } = useContext(AppContext);
   const [searchboxState, setSearchboxState] = useState<SearchboxStatus>({focused: false, query: null, status: "empty"});
+  const [isEmpty, setIsEmpty] = useState(true);
+  const textHistory = useRef<SearchboxHistory>({pointer: -1, timeline: []});
   const searchTimeoutRef = useRef<number>(-1);
-  const searchboxInputRef = useRef<HTMLInputElement>(null);
+  const searchboxInputRef = useRef<HTMLDivElement>(null);
   const searchboxContentRef = useRef<HTMLDivElement>(null);
   const id = useId();
   const listboxId = `search-content-${id}`;
+
+  const pushHistory = (text: string) => {
+    const hist = textHistory.current;
+    hist.timeline.push(text);
+
+    if (hist.timeline.length > 50) {
+      hist.timeline = hist.timeline.slice(hist.timeline.length - 50);
+    }
+
+    hist.pointer = hist.timeline.length - 1;
+  }
+
+  const undo = () => {
+    textHistory.current.pointer = Math.max(0, textHistory.current.pointer - 1);
+    historyChanged(elementSymbolLookup, textHistory.current, searchboxInputRef.current!);
+  }
+
+  const redo = () => {
+    textHistory.current.pointer = Math.min(textHistory.current.timeline.length - 1, textHistory.current.pointer + 1);
+    historyChanged(elementSymbolLookup, textHistory.current, searchboxInputRef.current!);
+  }
 
   const searchElement = useCallback((query: string) => {
     const queryLowerCase = query.toLowerCase();
@@ -148,9 +144,14 @@ export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["
     return null;
   }, [elementTable, elementSymbolLookup])
 
-  function closeLastQuery(e: InputEvent<HTMLInputElement>) {
-    const input = (e.target as HTMLInputElement);
-    const searchQuery = input.value;
+  function closeLastQuery(e: InputEvent<HTMLDivElement>) {
+    const inputElement = e.currentTarget as HTMLDivElement;
+    const rawInput = inputElement.textContent;
+
+    setIsEmpty(rawInput === "");
+    handleInputSubscripts(elementSymbolLookup, inputElement);
+
+    const searchQuery = rawInput.replaceAll("\n", "");
 
     if (searchTimeoutRef.current >= 0) {
       clearTimeout(searchTimeoutRef.current);
@@ -161,15 +162,9 @@ export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["
         ...s,
         query: null,
         status: "empty"
-      }))
+      }));
+      return;
     }
-  }
-
-  function sendSearchQuery(e: ChangeEvent<HTMLInputElement>) {
-    const input = (e.target as HTMLInputElement);
-    const searchQuery = input.value;
-
-    if (searchQuery === "") return;
 
     setSearchboxState((s) => ({
       ...s,
@@ -180,11 +175,15 @@ export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["
     searchTimeoutRef.current = setTimeout(() => {
       const query = evaluateUserSearch(searchQuery, searchElement);
       console.log("User search.")
+
+      pushHistory(rawInput);
+
       setSearchboxState((s) => ({
         ...s,
         query,
         status: "fetched"
       }))
+
       searchTimeoutRef.current = -1;
     }, 500)
   }
@@ -195,6 +194,23 @@ export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["
 
   function onFocus() {
     setSearchboxState((s) => ({...s, focused: true}))
+  }
+
+  function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    if (e.key === "Enter") e.preventDefault(); // Disallow new lines
+
+    const key = e.key.toLowerCase();
+
+    if (key === "z" && e.ctrlKey && !e.shiftKey) {
+      e.preventDefault();
+      undo();
+    } else if (
+      (key === "y" && e.ctrlKey) ||
+      (key === "z" && e.ctrlKey && e.shiftKey)
+    ) {
+      e.preventDefault();
+      redo();
+    }
   }
 
   return (
@@ -208,18 +224,21 @@ export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["
       onBlur={onBlur}
     >
       <Search className="icon-noshrink" aria-hidden size={16} />
-      <input 
+      <div 
         className={clsx("searchbox", className)}
-        role="searchbox" 
-        placeholder="Enter a chemical query..."
+        role="searchbox"
+        contentEditable
+        suppressContentEditableWarning
         aria-autocomplete="list"
         aria-controls={listboxId}
         aria-busy={searchboxState.status === "loading"}
+        data-placeholder="Enter a chemical query..."
+        data-empty={`${isEmpty}`}
         {...rest}
         ref={searchboxInputRef}
+        onKeyDown={onKeyDown}
         onInput={closeLastQuery}
-        onChange={sendSearchQuery}
-      />
+      ></div>
 
       {(searchboxState.focused && searchboxState.status !== "empty") &&
         <div 

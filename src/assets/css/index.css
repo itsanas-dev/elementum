@@ -1,4 +1,6 @@
 :root {
+  /* Dark mode theme settings */
+
   --font-family: "Inter", var(--default-font-family);
   --color-code-bg: #1b1a1f;
   --color-text-muted: #919191;
@@ -6,6 +8,7 @@
   --color-br-separator: #2b2b2e;
   --color-input-background: #1e1e1e;
   --color-input-placeholder: #8a8b8a;
+  --color-input-scrollbar: rgba(170 170 170 / 0.35);
   --color-input-border: #64646466;
   --color-searchentry-hover: rgba(220, 220, 220, 0.05);
   --color-searchentry-click: rgba(220, 220, 220, 0.09);
@@ -81,7 +84,7 @@ body, main {
   overflow-x: hidden;
 }
 
-button, input, body, label {
+button, input, body, label, textarea {
   font-family: var(--font-family);
   color: var(--color-text);
 }

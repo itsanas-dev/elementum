@@ -2,7 +2,7 @@ import { ConfigContext } from "@/provider/ConfigContext"
 import type { AppTheme } from "@/lib/types";
 import { MoonIcon, Settings, SunIcon } from "lucide-react";
 import { useContext, useEffect, useRef, type MouseEvent } from "react"
-import Searchbar from "@/components/ui/Searchbar";
+import Searchbar from "@/components/ui/searchbar/Searchbox";
 import "@/assets/css/topbar.css"
 
 function getThemeToggle(theme: AppTheme): AppTheme {
