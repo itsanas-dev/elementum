@@ -1,4 +1,4 @@
-import type { Config, PeriodicTableSchema, TableElement } from "@/lib/types"
+import type { Config, MarkupType, PeriodicTableSchema, TableElement } from "@/lib/types"
 import { calculateAtomicMass, constructMolecularFormula } from "./periodicTable"
 import { getDensityByConfig, getTemperatureByConfig, getUnitMultiplier, type NumericQuantityType, parsePhysicalQuantity, type PhysicalQuantity } from "@/lib/unitConversion"
 import { getEmpiricalFormula } from "./empiricalFormula"
@@ -28,9 +28,14 @@ type SearchContext = {
   quantities: Record<string, PhysicalQuantity>
 }
 
+type SearchMarkupType = "text" | MarkupType
+
 type SearchResult = {
   action: string,
-  result: string
+  result: string,
+
+  markupTypeResult: SearchMarkupType,
+  markupTypeAction: SearchMarkupType
 }
 
 export type SearchEvaluation = {
@@ -40,6 +45,17 @@ export type SearchEvaluation = {
   params: {
     elements: ParsedElement[],
     quantities: PhysicalQuantity[]
+  }
+}
+
+function wrapResult(options: Partial<SearchResult>): SearchResult {
+  return {
+    action: "undefined",
+    result: "undefined",
+    markupTypeAction: "text",
+    markupTypeResult: "text",
+
+    ...options
   }
 }
 
@@ -55,12 +71,25 @@ function getNthElement(list: ParsedElement[], n: number) {
   return el.composition[0].components[0]
 }
 
-function displayElementAttribute(table: PeriodicTableSchema, elements: ParsedElement[], attributeText: (el: TableElement) => string, responseText: (el: TableElement) => string, elementIndex: number = 0) {
+function displayElementAttribute(
+  table: PeriodicTableSchema, 
+  elements: ParsedElement[], 
+  attributeText: (el: TableElement) => string, 
+  responseText: (el: TableElement) => string,
+  elementIndex: number = 0,
+  markupTypeAction?: SearchMarkupType,
+  markupTypeResult?: SearchMarkupType
+) {
   const el = table[getNthElement(elements, elementIndex)!.id]!;
 
   if (el.type !== "element") return null
 
-  return {action: attributeText(el), result: responseText(el) }
+  return wrapResult({
+    action: attributeText(el), 
+    result: responseText(el), 
+    markupTypeAction,
+    markupTypeResult
+  });
 }
 
 // Type-checking here is sparse because we can be reasonably sure that the elements do exist for the
@@ -79,11 +108,16 @@ export function evaluateSearchIntent(
         (el) => el.number.toFixed(0)
       )
 
-    case "molar_mass":
-      return {
+    case "molar_mass": {
+      const molarMass = calculateAtomicMass(allElementsTable, elements[0]);
+
+      return wrapResult({
         action: `The atomic mass of ${elements[0].raw} is`,
-        result: `${displayDecimal(calculateAtomicMass(allElementsTable, elements[0]))} g/mol`
-      }
+        result: `${displayDecimal(molarMass)} g/mol`,
+
+        markupTypeAction: "molecular_formula"
+      })
+    }
       
     case "element_density":
       return displayElementAttribute(allElementsTable, elements, 
@@ -94,8 +128,11 @@ export function evaluateSearchIntent(
     case "electronic_configuration_semantic":
     case "electronic_configuration_full": 
       return displayElementAttribute(allElementsTable, elements, 
-        (el) => `The electronic configuration of ${el.symbol} is`,
-        (el) => (intent.type === "electronic_configuration_full") ? el.electron_configuration : el.electron_configuration_semantic
+        (el) => `The ${intent.type === "electronic_configuration_full" ? "full" : "semantic"} electronic configuration of ${el.symbol} is`,
+        (el) => (intent.type === "electronic_configuration_full") ? el.electron_configuration : el.electron_configuration_semantic,
+        0,
+        "text",
+        "subshell"
       )
 
     case "element_group":
@@ -153,10 +190,13 @@ export function evaluateSearchIntent(
 
       if (!empiricalFormula) return null;
 
-      return {
+      return wrapResult({
         action: `The empirical formula of ${element.raw} is`,
-        result: empiricalFormula
-      }
+        result: empiricalFormula,
+
+        markupTypeResult: "molecular_formula",
+        markupTypeAction: "molecular_formula"
+      });
     }
 
     case "bond_electronegativity": {
@@ -170,10 +210,10 @@ export function evaluateSearchIntent(
       const isEqual = enDiff <= 1e-5;
       const suffix = !isEqual ? ` (towards ${towards.symbol})` : "";
 
-      return {
+      return wrapResult({
         action: `The E.N difference in ${element1.symbol}-${element2.symbol} bond is`,
         result: `${enDiff.toFixed(2)}${suffix}`
-      }
+      });
     }
 
     // Beware of 'floating point precision'. Fuck floating-points.
@@ -185,10 +225,12 @@ export function evaluateSearchIntent(
 
       const mass = molarMass * moleCount;
 
-      return {
+      return wrapResult({
         action: `The mass of ${quantities.compoundMoles.raw} of ${substance.raw} is`,
-        result: `${displayDecimal(mass)} g`
-      }
+        result: `${displayDecimal(mass)} g`,
+        
+        markupTypeAction: "molecular_formula"
+      });
     }
 
     case "moles_in_mass": {
@@ -198,10 +240,11 @@ export function evaluateSearchIntent(
       // Evil 'floating point imprecision' hack fix.
       const moles = parseFloat((quantities.compoundMass.converted / molarMass).toPrecision(10));
       
-      return {
+      return wrapResult({
         action: `The moles in ${quantities.compoundMass.raw} of ${substance.raw} is`,
-        result: `${displayMoles(moles)} mol`
-      }
+        result: `${displayMoles(moles)} mol`,
+        markupTypeAction: "molecular_formula"
+      })
     }
 
     case "elements_in_group": {
@@ -222,10 +265,10 @@ export function evaluateSearchIntent(
         return el.symbol;
       })
 
-      return {
+      return wrapResult({
         action: `The elements in group ${group.toFixed(0)} are`,
         result: `${elementsBySymbol.join(",  ")}`
-      }
+      })
     }
 
     case "elements_in_period": {
@@ -246,16 +289,16 @@ export function evaluateSearchIntent(
         return el.symbol;
       })
 
-      return {
+      return wrapResult({
         action: `The elements in period ${period.toFixed(0)} are`,
         result: `${elementsBySymbol.join(",  ")}`
-      }
+      })
     }
 
     case "unknown":
-      return {result: "Waiting for something to happen?", action: "Your search was too vague. Please try again."}
+      return wrapResult({result: "Waiting for something to happen?", action: "We couldn't understand your search. Please try again."})
     default:
-      return {result: "Oops, we have messed up somewhere.", action: `Unsupported operation "${intent.type}"`}
+      return wrapResult({result: "Oops, we have messed up somewhere.", action: `Unsupported operation "${intent.type}"`});
   }
 }
 
@@ -436,8 +479,6 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
 
           if (!isNumeric(potentialUnit.charAt(0), true)) {
             const unitMult = getUnitMultiplier(potentialUnit);
-            console.log(potentialUnit, unitMult);
-            
   
             if (unitMult) {
               i++;

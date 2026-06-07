@@ -1,7 +1,8 @@
+import { APCAcontrast, sRGBtoY } from "apca-w3"
 type Colour = {r: number, g: number, b: number};
 
-const TEXT_COLOUR_DARK = "#f1f1f1";
-const TEXT_COLOUR_LIGHT = "#141414";
+const TEXT_LIGHT = "#f1f1f1";
+const TEXT_DARK = "#141414";
 
 // Source - https://stackoverflow.com/a/5624139
 function hexToRgb(hex: string): Colour|null {
@@ -13,20 +14,27 @@ function hexToRgb(hex: string): Colour|null {
   } : null;
 }
 
-// I did not write this, I have no idea what magic is going on here.
-// I have no idea what the magic numbers are, but this is for gamma-correction.
-function linearize(c: number) {
-  const s = c / 255;
-  return s <= 0.04045 ? s / 12.92 : Math.pow((s + 0.065) / 1.055, 2.4);
+function getContrast(txtY: number, bgY: number): number {
+  let c = APCAcontrast(txtY, bgY);
+
+  if (typeof c !== "number") {
+    c = Number.parseFloat(c);
+  }
+
+  return Math.abs(c)
 }
 
 export function getTextColour(hex: string): string {
   const color = hexToRgb(hex);
-
+  
   if (!color) {
-    return TEXT_COLOUR_LIGHT;
+    return TEXT_DARK;
   }
 
-  const luminance = (0.2126 * linearize(color.r) + 0.7152 * linearize(color.g) + 0.0722 * linearize(color.b));
-  return luminance > 0.55 ? TEXT_COLOUR_LIGHT : TEXT_COLOUR_DARK;
+  const y = sRGBtoY([color.r, color.g, color.b]);
+
+  const darkContrast = getContrast(0.0, y);
+  const lightContrast = getContrast(1.0, y);
+
+  return darkContrast > lightContrast ? TEXT_DARK : TEXT_LIGHT;
 }

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import type { PeriodicTableSchema } from './lib/types'
-import TooltipProvider from './components/provider/TooltipProvider';
+import AdaptiveTooltipProvider from './components/provider/AdaptiveTooltipProvider';
 import AppProvider from './components/provider/AppProvider';
 import Topbar from './components/layout/Topbar';
-import { PeriodicTable } from './components/layout/pages/PagePeriodicTable';
+import { PeriodicTable } from '@/components/layout/PeriodicTable';
 import LoadingFallback from './components/fallback/LoadingFallback';
 import '@/assets/css/app.css'
 
@@ -101,7 +101,7 @@ function App() {
 
   return (
     <AppProvider elementTable={table}>
-      <TooltipProvider>
+      <AdaptiveTooltipProvider>
         <>
           <main>
             { table ? <AppContent /> : <LoadingFallback /> }
@@ -116,7 +116,8 @@ function App() {
             <a target='_blank' href="https://github.com/itsanas-dev/elementum">Github repo</a>
           </div>
         </footer>
-      </TooltipProvider>
+      </AdaptiveTooltipProvider>
+
     </AppProvider>
   )
 }

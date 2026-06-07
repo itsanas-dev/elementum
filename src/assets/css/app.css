@@ -1,3 +1,15 @@
+
+.card {
+  background-color: var(--color-tooltip-bg);
+  
+  border-radius: 3px;
+  padding: 0.75rem 0.75rem;
+
+  height: fit-content;
+  max-width: 300px;
+  min-height: 60px;
+}
+
 .loading-spinner {
   display: flex;
   justify-content: center;
@@ -31,9 +43,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-}
-
-.help-entry {
 }
 
 .text-muted {
@@ -136,18 +145,35 @@
 
 .separator-range-label {
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.825rem;
   margin-bottom: 3px;
   text-wrap: nowrap;
 }
 
-@media screen and (min-width: 1500px) {
+@media screen and (min-width: 1320px) {
   .entry-name {
     font-size: 0.7rem;
   }
 
   .element-symbol {
-    font-size: 1.75rem;
+    font-size: 1.475rem;
+  }
+}
+
+
+@media screen and (min-width: 1600px) {
+  .entry-name {
+    font-size: 0.9rem;
+  }
+
+  .element-symbol {
+    font-size: 1.625rem;
+  }
+}
+
+@media screen and (max-width: 1200px) {
+  .separator-range-label {
+    font-size: 0.75rem;
   }
 }
 
@@ -155,10 +181,6 @@
   /* Shift the labels more towards the edges and make the text slightly smaller */
   .label-atomic-mass {
     font-size: 0.525rem;
-  }
-
-  .separator-range-label {
-    font-size: 0.9rem;
   }
 
   .label-atomic-mass {
@@ -179,6 +201,10 @@
 @media screen and (max-width: 990px) {
   .label-atomic-mass {
     display: none;
+  }
+  
+  .separator-range-label {
+    font-size: 0.675rem;
   }
 
   .element-name {

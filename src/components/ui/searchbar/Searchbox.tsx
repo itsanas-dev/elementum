@@ -6,7 +6,7 @@ import LoadingFallback from "../../fallback/LoadingFallback"
 import { AppContext } from "@/provider/PeriodicTableContext"
 import type { SearchCandidate } from "@/lib/searchTypes"
 import { SearchboxEntry } from "./SearchboxEntry"
-import { handleInputSubscripts } from "@/lib/searchboxInput"
+import { markupMolecularFormula } from "@/lib/markup"
 import "@/assets/css/searchbox.css"
 
 type SearchboxStatus = {
@@ -32,8 +32,6 @@ function filterIntents(intents: SearchCandidate[]): SearchCandidate[] {
 }
 
 function SearchboxQueryResults({ query }: {query: SearchEvaluation}) {
-  console.log(query);
-  
   return <>
     {query && filterIntents(query.evaluation).map((intent) => {
       const elements = query.params.elements;
@@ -92,7 +90,7 @@ function historyChanged(symbolLookup: Record<string, string>|null, history: Sear
   const text = history.timeline[history.pointer];
 
   el.textContent = text;
-  handleInputSubscripts(symbolLookup, el);
+  markupMolecularFormula(symbolLookup, el);
   
   const sel = window.getSelection()
   const range = document.createRange()
@@ -159,7 +157,7 @@ export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["
     const rawInput = inputElement.textContent;
 
     setIsEmpty(rawInput === "");
-    handleInputSubscripts(elementSymbolLookup, inputElement);
+    markupMolecularFormula(elementSymbolLookup, inputElement);
 
     const searchQuery = rawInput.replaceAll("\n", "");
 
@@ -184,7 +182,6 @@ export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["
 
     searchTimeoutRef.current = setTimeout(() => {
       const query = evaluateUserSearch(searchQuery, searchElement);
-      console.log("User search.")
 
       pushHistory(rawInput);
 
@@ -237,6 +234,7 @@ export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["
       <div 
         className={clsx("searchbox", className)}
         role="searchbox"
+        dir="ltr"
         contentEditable
         suppressContentEditableWarning
         aria-autocomplete="list"

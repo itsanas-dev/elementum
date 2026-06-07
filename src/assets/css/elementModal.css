@@ -1,0 +1,56 @@
+
+
+.elementinfo-header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  justify-content: space-between;
+  gap: 4px 12px;
+
+  margin-bottom: 0.5em;
+}
+
+.elementinfo-symbol {
+  font-size: 2.25em;
+}
+
+.elementinfo-molarmass {
+  font-size: 1.5em;
+  font-weight: 700;
+  text-align: right;
+}
+
+.elementinfo-row {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+}
+
+.elementinfo-summary {
+  font-size: 0.75em;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.elementinfo-link {
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  font-weight: 700;
+  font-size: 0.95em;
+  float: right;
+  margin-top: 0.5rem;
+}
+
+.elementinfo-link:hover, .elementinfo-link:focus-visible {
+  text-decoration: underline;
+}
+
+.elementinfo-separator {
+  margin-block: 0.5em;
+  background-color: var(--color-br-separator);
+  width: 100%;
+  height: 1px;
+}

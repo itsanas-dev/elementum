@@ -4,7 +4,7 @@ import { displayDecimal } from "@/lib/string"
 import { ConfigContext } from "@/provider/ConfigContext"
 import type { TableElement } from "@/lib/types"
 import clsx from "clsx"
-import React, { useContext, type CSSProperties, type JSX, type MouseEvent } from "react"
+import React, { useContext, useMemo, type CSSProperties, type JSX, type MouseEvent } from "react"
 
 type ElementBlockComponentProps = Omit<JSX.IntrinsicElements["button"], "onClick"> & {
   element: TableElement,
@@ -13,8 +13,11 @@ type ElementBlockComponentProps = Omit<JSX.IntrinsicElements["button"], "onClick
 
 function ElementBlockComponent({ element, onClick, className, ...rest }: ElementBlockComponentProps) {
   const {theme} = useContext(ConfigContext);
-  const colour = getEntryColour(theme, element);
-  const textColour = getTextColour(colour);
+  const [colour, textColour] = useMemo(() => {
+    const c = getEntryColour(theme, element);
+    return [c, getTextColour(c)];
+  }, [theme, element]);
+  
   const style = {"--main-color": colour, "--text-color": textColour, gridColumn: element.xpos, gridRow: element.ypos} as CSSProperties;
 
   return (

@@ -36,7 +36,7 @@ export const AppThemes: Record<AppTheme, ThemeDef> = {
 
   "light": {
     metalloid: "#55b7bb",
-    transitionMetal: "hsl(49, 85%, 61%)",
+    transitionMetal: "#f0d147",
     alkaliMetal: "#ea4f6d",
     alkaliEarth: "#f39629",
     nonMetal: "#4792ef",

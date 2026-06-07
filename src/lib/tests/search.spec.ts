@@ -20,7 +20,6 @@ describe("evaluateUserSearch", () => {
   it("should match molar mass", () => {
     const result = evaluateUserSearch("molar mass of Ca", (e) => (e === "Ca" ? "calcium" : null));
     
-    console.log(result)
     expect(result.evaluation).toHaveLength(1);
     expect(result.evaluation[0]).toMatchObject({
       type: "molar_mass",
@@ -105,7 +104,7 @@ describe("evaluateUserSearch", () => {
     describe("single elements", () => {
       it("should recognize a single element symbol", () => {
         const result = parseCompound("Ca", matchElement);
-        console.log("CA", result)
+        
         expect(result).not.toBeNull();
         expect(result!.type).toBe("molecule")
         expect(result!.composition).toMatchObject([{

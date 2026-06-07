@@ -1,4 +1,6 @@
-export type ElementBlock = "s" | "p" | "d" | "f";
+import type React from "react";
+
+export type SubshellType = "s" | "p" | "d" | "f";
 export type EntryType = "element" | "separation"
 
 export type PeriodicTableSchema = {
@@ -34,7 +36,7 @@ export type TableElement = BaseEntryProperties & {
   electron_affinity: number,
   electronegativity_pauling: number,
   ionization_energies: number[],
-  block: ElementBlock,
+  block: SubshellType,
 };
 
 export type TableSeparator = BaseEntryProperties & {
@@ -45,13 +47,18 @@ export type TableSeparator = BaseEntryProperties & {
 
 export type TableEntry = | TableElement | TableSeparator
 
-export type TooltipState = {
-  selectedElement: string,
-  trigger: HTMLElement|null
+export type TooltipSide = "right" | "left" | "top" | "bottom"
+export type AdaptiveTooltipComponentType = React.ComponentType<{elementId: string}>
+
+export type AdaptiveTooltipState = {
+  show: boolean,
+  
+  trigger: HTMLElement|null,
+  elementId: string
 }
 
 export type TooltipPosition = {
-  side: "right" | "left" | "top" | "bottom",
+  side: TooltipSide,
   position: {x: number, y: number}
 }
 
@@ -64,4 +71,4 @@ export type Config = {
   preferredTemperatureUnit: TemperatureUnit
 }
 
-export type NavigationPageId = "page_undefined" | "page_table" | "page_searchhelp" | "page_about"
+export type MarkupType = "subshell" | "molecular_formula"

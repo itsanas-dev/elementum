@@ -2,25 +2,22 @@ import { type TableEntry } from "@/lib/types"
 import { ElementBlock } from "@/components/ui/ElementBlock";
 import SeparatorBlock from "@/components/ui/SeparatorBlock";
 import React, { useContext } from "react";
-import { TooltipContext } from "@/provider/TooltipContext";
 import { AppContext } from "@/provider/PeriodicTableContext";
+import { AdaptiveTooltipContext } from "@/provider/AdaptiveTooltipContext";
 
 function PeriodicTableComponent() {
   const { elementTable } = useContext(AppContext);
-  const { setTooltipState, tooltipState } = useContext(TooltipContext);
+  const { state, showTooltip } = useContext(AdaptiveTooltipContext);
 
   function onElementBlockClick(elementId: string, e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     if (e.button !== 0) return;
-    if (tooltipState?.selectedElement === elementId) return;
+    if (state?.elementId === elementId) return;
 
     const target = e.target as HTMLElement;
 
-    if (tooltipState?.trigger === target) return;
-    
-    setTooltipState({
-      selectedElement: elementId,
-      trigger: target,
-    });
+    if (state?.trigger === target) return;
+
+    showTooltip(elementId, target);
   }
 
   if (!elementTable) return null;
@@ -39,8 +36,8 @@ function PeriodicTableComponent() {
                 return <ElementBlock
                   key={entry.symbol}
                   data-element={elementId}
-                  data-selected={(tooltipState?.selectedElement === elementId) || undefined}
-                  aria-labelledby={tooltipState?.selectedElement === elementId ? `element-info-tooltip` : undefined}
+                  data-selected={(state?.elementId === elementId)}
+                  aria-labelledby={state?.elementId === elementId ? `element-info-modal` : undefined}
                   onClick={(e) => onElementBlockClick(elementId, e)}
                   element={entry} 
                 />

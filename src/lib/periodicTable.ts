@@ -1,6 +1,17 @@
-import { type AppTheme, type PeriodicTableSchema, type TableEntry } from "@/lib/types";
+import { type AppTheme, type SubshellType, type PeriodicTableSchema, type TableEntry } from "@/lib/types";
 import { AppThemes } from "./theme";
 import type { FormulaComponent, ParsedElement } from "./searchTypes";
+
+const maxElectrons: Record<SubshellType, number> = {
+  s: 2,
+  p: 6,
+  d: 10,
+  f: 14
+};
+
+export function getElectronsInSubshell(subshell: SubshellType) {
+  return maxElectrons[subshell] ?? -1;
+}
 
 export function getEntryColour(theme: AppTheme, element: TableEntry) {
   const themeDef = AppThemes[theme] ?? AppThemes["dark"];

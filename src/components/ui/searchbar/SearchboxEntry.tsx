@@ -1,3 +1,4 @@
+import MarkupRenderer from "@/components/renderer/MarkupRenderer"
 import { evaluateSearchIntent } from "@/lib/search"
 import type { ParsedElement, SearchCandidate } from "@/lib/searchTypes"
 import type { PhysicalQuantity } from "@/lib/unitConversion"
@@ -31,12 +32,26 @@ export const SearchboxEntry = React.memo(({ icon, quantities, intentEntry, eleme
       <div className="searchbox-entry" aria-hidden>
         {
           (evaluation.action && evaluation.action.length > 0) && 
-          <p className="searchbox-expression text-muted">{evaluation.action}</p>
+          <p className="searchbox-expression text-muted">
+            {
+              evaluation.markupTypeAction !== "text" ?
+              <MarkupRenderer markupType={evaluation.markupTypeAction} textContent={evaluation.action} />
+              :
+              <>{evaluation.action}</>
+            }
+          </p>
         }
 
         {
           (evaluation.result && evaluation.result.length > 0) && 
-          <h2 className="searchbox-result">{evaluation.result}</h2>
+          <h2 className="searchbox-result">
+            {
+              evaluation.markupTypeResult !== "text" ?
+              <MarkupRenderer markupType={evaluation.markupTypeResult} textContent={evaluation.result} />
+              :
+              <>{evaluation.result}</>
+            }
+          </h2>
         }
 
       </div>
