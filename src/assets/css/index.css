@@ -12,6 +12,11 @@
   --color-input-border: oklch(0.5032 0 0 / 40%);
   --color-searchentry-hover: oklch(0.8945 0 0 / 5%);
   --color-searchentry-click: oklch(0.8945 0 0 / 9%);
+  --color-togglegroup-bg: oklch(0.235 0 0);
+  --color-togglegroup-hover: oklch(0.780 0 0 / 8%);
+  --color-togglegroup-selected: oklch(0.780 0 0 / 12%);
+  --color-togglegroup-border: oklch(0.5032 0 0 / 40%);
+  --color-focusvisible: #219DFD;
 
   --code-font: "Source Code Pro", monospace;
 }
@@ -34,6 +39,10 @@
   :root[data-themechange="true"]:not([data-themechange-reducemotion="true"]) * {
     transition: color 220ms ease, background 220ms ease, border 220ms ease;
   } 
+}
+
+#__tooltip-portal {
+  position: relative;
 }
 
 .sr-only {
@@ -69,52 +78,47 @@ footer {
   gap: 0.5rem;
 }
 
-a {
-  color: var(--color-text);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-a:focus-visible, a:hover {
-  text-decoration: underline;
-}
-
-html {
-  font-size: 16px;
-}
-
-main {
-  margin-top: 10rem;
-  display: flex;
-  flex-direction: column;
-}
-
-#__tooltip-portal {
-  position: relative;
-}
-
-body, main {
-  min-height: 100vh;
-  overflow-x: hidden;
-}
-
-button, input, body, label, textarea, dialog {
-  font-family: var(--font-family);
-  color: var(--color-text);
-}
-
-h1, h2, h3, h4, h5, h6 {
-  letter-spacing: -0.02em;
-}
-
 .underline {
   text-decoration: underline;
 }
 
-code {
-  font-family: var(--code-font);
+@layer base {
+  main {
+    margin-top: 10rem;
+    display: flex;
+    flex-direction: column;
+  }
   
-  background-color: var(--color-code-bg);
-  padding: 2px 0.25rem;
-  border-radius: 3px;
+  body, main {
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+}
+
+@layer reset {
+  a {
+    color: var(--color-text);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  
+  a:focus-visible, a:hover {
+    text-decoration: underline;
+  }
+  
+  button, input, body, label, textarea, dialog {
+    font-family: var(--font-family);
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.02em;
+  }
+  
+  code {
+    font-family: var(--code-font);
+    
+    background-color: var(--color-code-bg);
+    padding: 2px 0.25rem;
+    border-radius: 3px;
+  }
 }

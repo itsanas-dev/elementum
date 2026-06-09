@@ -1,9 +1,10 @@
 import { ConfigContext } from "@/provider/ConfigContext"
 import type { AppTheme } from "@/lib/types";
 import { MoonIcon, Settings, SunIcon } from "lucide-react";
-import { useContext, useRef } from "react"
+import { useContext, useRef, useState } from "react"
 import Searchbar from "@/components/ui/searchbar/Searchbox";
 import "@/assets/css/topbar.css"
+import SettingsModal from "./modal/SettingsModal";
 
 function getThemeToggle(theme: AppTheme): AppTheme {
   return theme === "dark" ? "light" : "dark";
@@ -11,6 +12,7 @@ function getThemeToggle(theme: AppTheme): AppTheme {
 
 export default function Toolbar() {
   const { theme, setTheme } = useContext(ConfigContext);
+  const [settings, setModalShow] = useState(false);
   const iconAria = `Switch to ${getThemeToggle(theme)} mode`
   const canChange = useRef(true);
 
@@ -32,18 +34,21 @@ export default function Toolbar() {
   }
 
   return (
-    <header className="topbar">
-      <div className="topbar-search">
-        <Searchbar />
-      </div>
-      <nav className="toolbar" aria-label="Site controls">
-        <button className="icon-button" onClick={toggleTheme} aria-label={iconAria}>
-          {theme === "dark" ? <MoonIcon /> : <SunIcon />}
-        </button>
-        <button className="icon-button">
-          <Settings />
-        </button>
-      </nav>
-    </header>
+    <>
+      <SettingsModal show={settings} close={() => setModalShow(false)} />
+      <header className="topbar">
+        <div className="topbar-search">
+          <Searchbar />
+        </div>
+        <nav className="toolbar" aria-label="Site controls">
+          <button className="icon-button" onClick={toggleTheme} aria-label={iconAria}>
+            {theme === "dark" ? <MoonIcon /> : <SunIcon />}
+          </button>
+          <button onClick={() => setModalShow(true)} className="icon-button">
+            <Settings />
+          </button>
+        </nav>
+      </header>
+    </>
   )
 }

@@ -17,6 +17,8 @@
   font-size: 0.85rem;
 
   animation: modal-appear 150ms ease;
+  overflow-x: hidden;
+  scrollbar-width: thin;
 }
 
 .modal:focus-visible {

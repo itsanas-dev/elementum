@@ -1,14 +1,13 @@
 import type { TooltipPosition, TooltipSide } from "@/lib/types";
 import clsx from "clsx";
-import { useEffect, useRef, useState, type JSX } from "react";
+import { useEffect, useMemo, useRef, useState, type JSX } from "react";
 import "@/assets/css/tooltip.css"
 import { createPortal } from "react-dom";
 import { getFocusableElements } from "@/lib/focus";
 
 type TooltipProps = {
   trigger: HTMLElement,
-  close: () => void,
-  container?: HTMLElement
+  close: () => void
 } & JSX.IntrinsicElements["div"]
 
 type Vec2 = {x: number, y: number}
@@ -126,7 +125,8 @@ function TooltipPortal({children, trigger, className, ...rest}: Omit<TooltipProp
 }
 
 export default function Tooltip(props: Omit<TooltipProps, "ref">) {
-  const {container, close, ...propsRest} = props;
+  const tooltipPortal = useMemo(() => document.querySelector(`#__tooltip-portal`) as HTMLElement, []);
+  const { close, ...propsRest } = props;
   const tooltipRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -204,16 +204,12 @@ export default function Tooltip(props: Omit<TooltipProps, "ref">) {
     }
   }, [close])
 
-  const tooltip = <TooltipPortal {...propsRest} ref={tooltipRef} />
-  
   return (
     <>
-      {
-      container ?
-        createPortal(tooltip, container)
-        :
-        tooltip
-      }
+      {createPortal(
+        <TooltipPortal {...propsRest} ref={tooltipRef} />,
+        tooltipPortal
+      )}
     </>
   )
 }

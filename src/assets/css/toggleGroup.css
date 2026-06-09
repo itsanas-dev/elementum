@@ -1,0 +1,49 @@
+.toggle-group {
+  --border: 1px solid var(--color-togglegroup-border);
+  background-color: var(--color-togglegroup-bg);
+
+  width: fit-content;
+  display: flex;
+  align-items: center;
+
+  border-radius: 3px;
+  border: var(--border);
+  border-right: none;
+  border-left: none;
+}
+
+.toggle-group-item {
+  min-width: 4rem;
+  max-width: 9rem;
+  padding-block: 0.5rem;
+
+  border-radius: inherit;
+
+  cursor: pointer;
+  outline: none;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  background-color: var(--color-togglegroup-bg);
+  border: none;
+  border-left: var(--border);
+
+  &:hover {
+    background-color: var(--color-togglegroup-hover);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focusvisible);
+    outline-offset: 1px;
+    z-index: 3;
+  }
+}
+
+.toggle-group > .toggle-group-item:last-child {
+  border-right: var(--border);
+}
+
+.toggle-group-item.selected {
+  background-color: var(--color-togglegroup-selected);
+}

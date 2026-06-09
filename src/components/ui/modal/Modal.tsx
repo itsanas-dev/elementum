@@ -1,13 +1,12 @@
 import { ModalContext } from "@/provider/ModalContext";
 import clsx from "clsx";
-import { useEffect, useId, useRef, type JSX } from "react";
+import { useEffect, useId, useMemo, useRef, type JSX } from "react";
 import { createPortal } from "react-dom";
 import "@/assets/css/modal.css"
 import { getFocusableElements } from "@/lib/focus";
 
 export type DialogProps = Omit<JSX.IntrinsicElements["dialog"], "open"> & {
   open?: boolean,
-  container?: HTMLElement|null,
 
   closeModal: () => void
 }
@@ -26,7 +25,8 @@ function ModalPortal({ className, children, ...rest }: JSX.IntrinsicElements["di
   )
 }
 
-export default function Modal({ open, closeModal, container, id, ...rest }: DialogProps) {
+export default function Modal({ open, closeModal, id, ...rest }: DialogProps) {
+  const portalElement = useMemo(() => document.querySelector(`#__tooltip-portal`) as HTMLElement, []);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const modalId = useId();
   const dialogId = id || `modal-${modalId}`;
@@ -40,9 +40,16 @@ export default function Modal({ open, closeModal, container, id, ...rest }: Dial
       focusables = getFocusableElements(dialogElement);
     }
 
-    function checkFocus(e: Event) {
+    function checkFocus(e: FocusEvent) {
       if (focusables.length === 0) return;
       const target = e.target as HTMLElement;
+
+      if (!target.dataset.focustrap) return;
+
+      const related = e.relatedTarget as HTMLElement | null;
+
+      if (related?.dataset.focustrap) return;
+
       const first = focusables[0] as HTMLElement;
       const last = focusables[focusables.length-1] as HTMLElement;
 
@@ -132,11 +139,13 @@ export default function Modal({ open, closeModal, container, id, ...rest }: Dial
   }, [open, closeModal, modalId])
   
   return (
-    <ModalContext.Provider value={{titleId: modalTitleId, closeModal}}>
-      {createPortal(
-        <ModalPortal id={dialogId} aria-labelledby={modalTitleId} ref={dialogRef} tabIndex={-1} {...rest} />,
-        container || document.body
-      )}
-    </ModalContext.Provider>
+    <>
+      <ModalContext.Provider value={{titleId: modalTitleId, closeModal}}>
+        {createPortal(
+          <ModalPortal id={dialogId} aria-labelledby={modalTitleId} ref={dialogRef} tabIndex={-1} {...rest} />,
+          portalElement || document.body
+        )}
+      </ModalContext.Provider>
+    </>
   )
 }
