@@ -64,12 +64,10 @@ export default function SettingsModal({ show, close }: {show: boolean, close: ()
   const { preferredTemperatureUnit, preferredDensityUnit, setTemperatureUnit, setDensityUnit } = useContext(ConfigContext);
 
   function updateDensityToggle(target: string) {
-    console.log(`DENSITY`, target);
     setDensityUnit(target as DensityUnit)
   }
   
   function updateTemperatureToggle(target: string) {
-    console.log(`temp`, target);
     setTemperatureUnit(target as TemperatureUnit)
   }
 
@@ -91,9 +89,7 @@ export default function SettingsModal({ show, close }: {show: boolean, close: ()
             selected={preferredTemperatureUnit}
           />
         </ConfigField>
-      </ModalContent>
 
-      <ModalContent>
         <ConfigField 
           id="density-toggle" 
           label="Density unit"
@@ -106,6 +102,7 @@ export default function SettingsModal({ show, close }: {show: boolean, close: ()
           />
         </ConfigField>
       </ModalContent>
+
     </Modal>
   )
 }

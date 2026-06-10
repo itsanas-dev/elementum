@@ -13,16 +13,16 @@ type SearchWarning = | {kind: "unknown_element", token: string}
                      | {kind: "quantity_mismatch", required: NumericQuantityType[], searchAction: string}
                      | {kind: "unexpected_quantity", actionName: string}
 
-type PeriodicTableLookup = {
+type PeriodicTableSearchContext = {
   allElements: PeriodicTableSchema,
-  groupLookup: Record<number, string[]>|null,
-  periodLookup: Record<number, string[]>|null,
+  groupLookup: Record<string, string[]>,
+  periodLookup: Record<string, string[]>,
 }
 
 // god i'm so sick of naming things, the names aren't even good.
 type SearchContext = {
   intent: SearchCandidate,
-  table: PeriodicTableLookup,
+  table: PeriodicTableSearchContext,
   elements: ParsedElement[],
   config: Config,
   quantities: Record<string, PhysicalQuantity>
@@ -80,9 +80,7 @@ function displayElementAttribute(
   markupTypeAction?: SearchMarkupType,
   markupTypeResult?: SearchMarkupType
 ) {
-  const el = table[getNthElement(elements, elementIndex)!.id]!;
-
-  if (el.type !== "element") return null
+  const el = table.elements[getNthElement(elements, elementIndex)!.id]!;
 
   return wrapResult({
     action: attributeText(el), 
@@ -99,17 +97,17 @@ export function evaluateSearchIntent(
   searchContent: SearchContext
 ): SearchResult|null {
   const {table, quantities, intent, elements, config} = searchContent;
-  const { allElements: allElementsTable, groupLookup, periodLookup } = table;
+  const { allElements: tableAll, groupLookup, periodLookup } = table;
 
   switch (intent.type) {
     case "atomic_number": 
-      return displayElementAttribute(allElementsTable, elements, 
+      return displayElementAttribute(tableAll, elements, 
         (el) => `The atomic number of ${el.symbol} is`,
         (el) => el.number.toFixed(0)
       )
 
     case "molar_mass": {
-      const molarMass = calculateAtomicMass(allElementsTable, elements[0]);
+      const molarMass = calculateAtomicMass(tableAll, elements[0]);
 
       return wrapResult({
         action: `The atomic mass of ${elements[0].raw} is`,
@@ -120,14 +118,14 @@ export function evaluateSearchIntent(
     }
       
     case "element_density":
-      return displayElementAttribute(allElementsTable, elements, 
+      return displayElementAttribute(tableAll, elements, 
         (el) => `The density of ${el.symbol} is`,
         (el) => el.density ? getDensityByConfig(el.density, config.preferredDensityUnit) : "Unknown"
       );
 
     case "electronic_configuration_semantic":
     case "electronic_configuration_full": 
-      return displayElementAttribute(allElementsTable, elements, 
+      return displayElementAttribute(tableAll, elements, 
         (el) => `The ${intent.type === "electronic_configuration_full" ? "full" : "semantic"} electronic configuration of ${el.symbol} is`,
         (el) => (intent.type === "electronic_configuration_full") ? el.electron_configuration : el.electron_configuration_semantic,
         0,
@@ -136,49 +134,49 @@ export function evaluateSearchIntent(
       )
 
     case "element_group":
-      return displayElementAttribute(allElementsTable, elements,
+      return displayElementAttribute(tableAll, elements,
         (el) => `The group of ${el.symbol} is`,
         (el) => `Group ${el.group}`
       )
 
     case "element_period":
-      return displayElementAttribute(allElementsTable, elements,
+      return displayElementAttribute(tableAll, elements,
         (el) => `The period of ${el.symbol} is`,
         (el) => `Period ${el.period}`
       )
 
     case "element_state":
-      return displayElementAttribute(allElementsTable, elements,
+      return displayElementAttribute(tableAll, elements,
         (el) => `The physical state (at r.t.p) of ${el.symbol} is`,
         (el) => `${el.state}`
       )
 
     case "element_mp":
-      return displayElementAttribute(allElementsTable, elements,
+      return displayElementAttribute(tableAll, elements,
         (el) => `The melting point of ${el.symbol} is`,
         (el) => el.melt ? getTemperatureByConfig(el.melt, config.preferredTemperatureUnit) : "Unknown"
       )
 
     case "element_bp":
-      return displayElementAttribute(allElementsTable, elements,
+      return displayElementAttribute(tableAll, elements,
         (el) => `The boiling point of ${el.symbol} is`,
         (el) => el.boil ? getTemperatureByConfig(el.boil, config.preferredTemperatureUnit) : "Unknown"
       )
     
     case "element_appearance":
-      return displayElementAttribute(allElementsTable, elements,
+      return displayElementAttribute(tableAll, elements,
         (el) => `The appearance of ${el.symbol} is`,
         (el) => el.appearance || "Unknown"
       )
 
     case "element_electronaffinity":
-      return displayElementAttribute(allElementsTable, elements,
+      return displayElementAttribute(tableAll, elements,
         (el) => `The electron affinity of ${el.symbol} is`,
         (el) => `${el.electron_affinity.toFixed(2)} kJ/mol`
       )
 
     case "electronegativity":
-      return displayElementAttribute(allElementsTable, elements, 
+      return displayElementAttribute(tableAll, elements, 
         (el) => `The electronegativity of ${el.symbol} is`,
         (el) => `${el.electronegativity_pauling}`
       )
@@ -186,7 +184,7 @@ export function evaluateSearchIntent(
     case "empirical_formula": {
       const element = elements[0];
       const empiricalComposition = getEmpiricalFormula(element.composition);
-      const empiricalFormula = constructMolecularFormula(allElementsTable, empiricalComposition);
+      const empiricalFormula = constructMolecularFormula(tableAll, empiricalComposition);
 
       if (!empiricalFormula) return null;
 
@@ -200,10 +198,8 @@ export function evaluateSearchIntent(
     }
 
     case "bond_electronegativity": {
-      const element1 = allElementsTable[getNthElement(elements, 0)!.id]!;
-      const element2 = allElementsTable[getNthElement(elements, 1)!.id]!;
-
-      if (element1.type !== "element" || element2.type !== "element") return null;
+      const element1 = tableAll.elements[getNthElement(elements, 0)!.id]!;
+      const element2 = tableAll.elements[getNthElement(elements, 1)!.id]!;
 
       const enDiff = Math.abs(element1.electronegativity_pauling - element2.electronegativity_pauling);
       const towards = element1.electronegativity_pauling > element2.electronegativity_pauling ? element1 : element2;
@@ -221,7 +217,7 @@ export function evaluateSearchIntent(
     case "mass_in_moles": {
       const substance = elements[0];
       const moleCount = quantities.compoundMoles.converted;
-      const molarMass = calculateAtomicMass(allElementsTable, substance);
+      const molarMass = calculateAtomicMass(tableAll, substance);
 
       const mass = molarMass * moleCount;
 
@@ -235,7 +231,7 @@ export function evaluateSearchIntent(
 
     case "moles_in_mass": {
       const substance = elements[0];
-      const molarMass = calculateAtomicMass(allElementsTable, substance);
+      const molarMass = calculateAtomicMass(tableAll, substance);
 
       // Evil 'floating point imprecision' hack fix.
       const moles = parseFloat((quantities.compoundMass.converted / molarMass).toPrecision(10));
@@ -250,17 +246,14 @@ export function evaluateSearchIntent(
     case "elements_in_group": {
       const group = quantities.group.converted;
 
-      if (!groupLookup) return null;
       if (!Number.isInteger(group) || (group < 1 || group > 18)) return null;
 
-      const elements = groupLookup[group];
+      const elements = groupLookup[`group_${group}`];
 
       if (!elements) return null;
 
       const elementsBySymbol = elements.map((id) => {
-        const el = allElementsTable[id]!;
-
-        if (el.type !== "element") return "ignore this";
+        const el = tableAll.elements[id]!;
 
         return el.symbol;
       })
@@ -274,17 +267,14 @@ export function evaluateSearchIntent(
     case "elements_in_period": {
       const period = quantities.period.converted;
 
-      if (!periodLookup) return null;
       if (!Number.isInteger(period) || (period < 1 || period > 8)) return null;
 
-      const elements = periodLookup[period];
+      const elements = periodLookup[`period_${period}`];
 
       if (!elements) return null;
 
       const elementsBySymbol = elements.map((id) => {
-        const el = allElementsTable[id]!;
-
-        if (el.type !== "element") return "ignore this";
+        const el = tableAll.elements[id]!;
 
         return el.symbol;
       })

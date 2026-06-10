@@ -1,6 +1,6 @@
 import clsx from "clsx"
 import { CircleQuestionMark, EqualIcon, Search } from "lucide-react"
-import { useCallback, useContext, useId, useRef, useState, type InputEvent, type JSX, type KeyboardEvent } from "react"
+import { useContext, useId, useMemo, useRef, useState, type InputEvent, type JSX, type KeyboardEvent } from "react"
 import { buildQuantityRecord, evaluateUserSearch, getIntendedArgumentCount, getQuantitiesRequiredForEntry, type SearchEvaluation } from "@/lib/search"
 import LoadingFallback from "../../fallback/LoadingFallback"
 import { AppContext } from "@/provider/PeriodicTableContext"
@@ -8,6 +8,7 @@ import type { SearchCandidate } from "@/lib/searchTypes"
 import { SearchboxEntry } from "./SearchboxEntry"
 import { markupMolecularFormula } from "@/lib/markup"
 import "@/assets/css/searchbox.css"
+import type { PeriodicTableSchema } from "@/lib/types"
 
 type SearchboxStatus = {
   focused: boolean,
@@ -18,6 +19,43 @@ type SearchboxStatus = {
 type SearchboxHistory = {
   timeline: string[],
   pointer: number
+}
+
+function historyChanged(symbolLookup: Record<string, string>, history: SearchboxHistory, el: HTMLDivElement) {
+  const text = history.timeline[history.pointer];
+
+  el.textContent = text;
+  markupMolecularFormula(symbolLookup, el);
+  
+  const sel = window.getSelection()
+  const range = document.createRange()
+  range.selectNodeContents(el)
+  range.collapse(false)
+
+  if (sel) {
+    sel.removeAllRanges()
+    sel.addRange(range)
+  }
+}
+
+function elementSearcher(table: PeriodicTableSchema|null, symbolLookup: Record<string, string>) {
+  return (query: string) => {
+    const queryLowerCase = query.toLowerCase();
+
+    // Searching by id.
+    // This can match "Calcium", "calcium" and other element names.
+    if (table && table.elements[queryLowerCase]) {
+      const el = table.elements[queryLowerCase]
+
+      return (el.type === "element" ? queryLowerCase : null);
+    }
+
+    if (symbolLookup[query]) {
+      return symbolLookup[query];
+    }
+
+    return null;
+  }
 }
 
 // Ensures that you need a large threshold to show the other result.
@@ -86,23 +124,6 @@ function SearchboxQueryResults({ query }: {query: SearchEvaluation}) {
   </>
 }
 
-function historyChanged(symbolLookup: Record<string, string>|null, history: SearchboxHistory, el: HTMLDivElement) {
-  const text = history.timeline[history.pointer];
-
-  el.textContent = text;
-  markupMolecularFormula(symbolLookup, el);
-  
-  const sel = window.getSelection()
-  const range = document.createRange()
-  range.selectNodeContents(el)
-  range.collapse(false)
-
-  if (sel) {
-    sel.removeAllRanges()
-    sel.addRange(range)
-  }
-}
-
 export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["div"]) {
   const { elementTable, elementSymbolLookup } = useContext(AppContext);
   const [searchboxState, setSearchboxState] = useState<SearchboxStatus>({focused: false, query: null, status: "empty"});
@@ -111,6 +132,7 @@ export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["
   const searchTimeoutRef = useRef<number>(-1);
   const searchboxInputRef = useRef<HTMLDivElement>(null);
   const searchboxContentRef = useRef<HTMLDivElement>(null);
+  const searchElement = useMemo(() => elementSearcher(elementTable, elementSymbolLookup), [elementTable, elementSymbolLookup]);
   const id = useId();
   const listboxId = `search-content-${id}`;
 
@@ -135,28 +157,11 @@ export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["
     historyChanged(elementSymbolLookup, textHistory.current, searchboxInputRef.current!);
   }
 
-  const searchElement = useCallback((query: string) => {
-    const queryLowerCase = query.toLowerCase();
-
-    // Searching by id.
-    // This can match "Calcium", "calcium" and other element names.
-    if (elementTable && query !== "order" && elementTable[queryLowerCase]) {
-      const el = elementTable[queryLowerCase]
-      return el.type === "element" ? queryLowerCase : null;
-    }
-
-    if (elementSymbolLookup && elementSymbolLookup[query]) {
-      return elementSymbolLookup[query];
-    }
-
-    return null;
-  }, [elementTable, elementSymbolLookup])
-
   function closeLastQuery(e: InputEvent<HTMLDivElement>) {
     const inputElement = e.currentTarget as HTMLDivElement;
     const rawInput = inputElement.textContent;
 
-    setIsEmpty(rawInput === "");
+    setIsEmpty((rawInput === ""));
     markupMolecularFormula(elementSymbolLookup, inputElement);
 
     const searchQuery = rawInput.replaceAll("\n", "");

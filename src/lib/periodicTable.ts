@@ -1,4 +1,4 @@
-import { type AppTheme, type SubshellType, type PeriodicTableSchema, type TableEntry } from "@/lib/types";
+import { type AppTheme, type SubshellType, type PeriodicTableSchema, type TableSeries, type TableElement } from "@/lib/types";
 import { AppThemes } from "./theme";
 import type { FormulaComponent, ParsedElement } from "./searchTypes";
 
@@ -13,10 +13,10 @@ export function getElectronsInSubshell(subshell: SubshellType) {
   return maxElectrons[subshell] ?? -1;
 }
 
-export function getEntryColour(theme: AppTheme, element: TableEntry) {
+export function getEntryColour(theme: AppTheme, element: TableElement|TableSeries) {
   const themeDef = AppThemes[theme] ?? AppThemes["dark"];
 
-  if (element.type === "separation") {
+  if (element.type === "series") {
     return themeDef.seriesBlock;
   }
 
@@ -41,7 +41,7 @@ export function calculateAtomicMass(table: PeriodicTableSchema, parsed: ParsedEl
     let groupMass = 0;
 
     for (const entry of component.components) {
-      const element = table[entry.id];
+      const element = table.elements[entry.id];
 
       if (!element || element.type !== "element") return -1;
       
@@ -66,7 +66,7 @@ export function constructMolecularFormula(table: PeriodicTableSchema, groups: Fo
     }
 
     for (const atom of group.components) {
-      const el = table[atom.id];
+      const el = table.elements[atom.id];
 
       if (!el || el.type !== "element") return null;
 

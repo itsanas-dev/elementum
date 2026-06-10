@@ -10,7 +10,9 @@ import { AdaptiveTooltipContext } from "@/provider/AdaptiveTooltipContext"
 function AdaptivePopover({state, close}: {state: AdaptiveTooltipState, close: () => void}) {
   const {elementTable} = useContext(AppContext);
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const element = elementTable![state.elementId] as TableElement;
+  const element = elementTable?.elements[state.elementId] as TableElement;
+
+  if (!element) return null;
 
   return (
     <>

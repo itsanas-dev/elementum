@@ -1,11 +1,16 @@
 import type React from "react";
 
 export type SubshellType = "s" | "p" | "d" | "f";
-export type EntryType = "element" | "separation"
 
 export type PeriodicTableSchema = {
-  order: string[]
-} & Record<string, TableEntry|undefined>
+  order: string[],
+
+  groups: number,
+  periods: number,
+
+  elements: Record<string, TableElement|undefined>,
+  series: Record<string, TableSeries>
+}
 
 type BaseEntryProperties = {
   xpos: number,
@@ -39,13 +44,11 @@ export type TableElement = BaseEntryProperties & {
   block: SubshellType,
 };
 
-export type TableSeparator = BaseEntryProperties & {
-  type: "separation",
+export type TableSeries = BaseEntryProperties & {
+  type: "series",
   range: [number, number],
   name: string,
 }
-
-export type TableEntry = | TableElement | TableSeparator
 
 export type TooltipSide = "right" | "left" | "top" | "bottom"
 export type AdaptiveTooltipComponentType = React.ComponentType<{elementId: string}>

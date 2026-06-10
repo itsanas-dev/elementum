@@ -8,17 +8,13 @@ type ProviderProps = {
 }
 
 function createLookup(table: PeriodicTableSchema|null, mapper: (entry: TableElement) => string) {
-  if (!table) return null;
-
   const lookup: Record<string, string> = {};
+  
+  if (!table) return lookup;
 
-  for (const key of Object.keys(table)) {
-    if (key === "order") continue;
-
-    const element = table[key];
-
-    if (!element || element.type !== "element") continue;
-
+  for (const [key, element] of Object.entries(table.elements)) {
+    if (!element) continue;
+    
     const lookupKey = mapper(element);
     
     if (!lookupKey) continue;
@@ -29,59 +25,40 @@ function createLookup(table: PeriodicTableSchema|null, mapper: (entry: TableElem
   return lookup;
 }
 
+function createLookupGroup(table: PeriodicTableSchema|null, keyFn: (entry: TableElement) => string): Record<string, string[]> {
+  const lookup: Record<string, string[]> = {};
+  
+  if (!table) return lookup;
+
+  for (const [key, element] of Object.entries(table.elements)) {
+    if (!element) continue;
+
+    const groupKey = keyFn(element);
+
+    if (!lookup[groupKey]) {
+      lookup[groupKey] = []
+    }
+
+    lookup[groupKey].push(key);
+  }
+
+  return lookup;
+}
+
 export default function AppProvider({ elementTable, children }: ProviderProps) {
-  const symbolLookup = useMemo<Record<string, string>|null>(() => createLookup(elementTable, (entry) => {
+  const symbolLookup = useMemo<Record<string, string>>(() => createLookup(elementTable, (entry) => {
     return entry.symbol;
   }), [elementTable]);
 
-  const groupLookup = useMemo<Record<number, string[]>|null>(() => {
-    if (!elementTable) return null;
+  const groupLookup = useMemo<Record<string, string[]>>(
+    () => createLookupGroup(elementTable, (el) => `group_${el.group.toFixed(0)}`)
+  , [elementTable]);
 
-    const lookup: Record<number, string[]> = {};
+  const periodLookup = useMemo(
+  () => createLookupGroup(elementTable, 
+    (el) => `period_${el.period.toFixed(0)}`
+  ), [elementTable])
 
-    for (const key of Object.keys(elementTable)) {
-      if (key === "order") continue;
-
-      const element = elementTable[key];
-
-      if (!element || element.type !== "element") continue;
-
-      const groupKey = Math.floor(element.group);
-
-      if (!lookup[groupKey]) {
-        lookup[groupKey] = []
-      }
-
-      lookup[groupKey].push(key);
-    }
-
-    return lookup;
-  }, [elementTable])
-  
-  const periodLookup = useMemo<Record<number, string[]>|null>(() => {
-    if (!elementTable) return null;
-
-    const lookup: Record<number, string[]> = {};
-
-    for (const key of Object.keys(elementTable)) {
-      if (key === "order") continue;
-
-      const element = elementTable[key];
-
-      if (!element || element.type !== "element") continue;
-
-      const periodKey = Math.floor(element.period)
-
-      if (!lookup[periodKey]) {
-        lookup[periodKey] = []
-      }
-
-      lookup[periodKey].push(key);
-    }
-
-    return lookup;
-  }, [elementTable])
-  
   const providerObject: AppContextObject = useMemo(() => ({
     elementTable,
 

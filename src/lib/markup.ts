@@ -93,11 +93,9 @@ function buildFragment(
 }
 
 export function markupMolecularFormula(
-  symbolLookup: Record<string, string>|null, 
+  symbolLookup: Record<string, string>, 
   inputElement: HTMLElement
 ) {
-  if (!symbolLookup) return;
-
   applyMarkup(inputElement, (text) => {
     return buildFragment(
       text,

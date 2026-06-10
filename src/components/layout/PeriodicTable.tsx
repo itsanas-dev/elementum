@@ -1,4 +1,3 @@
-import { type TableEntry } from "@/lib/types"
 import { ElementBlock } from "@/components/ui/ElementBlock";
 import SeparatorBlock from "@/components/ui/SeparatorBlock";
 import React, { useContext } from "react";
@@ -27,26 +26,20 @@ function PeriodicTableComponent() {
       <div className="ptable-wrapper">
         <div role="grid" className="ptable">
           {elementTable.order.map((elementId) => {
-            const entry: TableEntry|undefined = elementTable[elementId];
+            const element = elementTable.elements[elementId];
 
-            if (!entry) return null;
-
-            switch (entry.type) {
-              case "element": {
-                return <ElementBlock
-                  key={entry.symbol}
-                  data-element={elementId}
-                  data-selected={(state?.elementId === elementId)}
-                  aria-labelledby={state?.elementId === elementId ? `element-info-modal` : undefined}
+            if (element) {
+              return <ElementBlock
+                  key={element.symbol}
                   onClick={(e) => onElementBlockClick(elementId, e)}
-                  element={entry} 
+                  elementId={elementId} 
                 />
-              }
-              case "separation":
-                return <SeparatorBlock
-                      key={elementId} 
-                      separator={entry} 
-                    />
+            }
+
+            const series = elementTable.series[elementId];
+
+            if (series) {
+              return <SeparatorBlock key={elementId} series={series} />
             }
           })}
         </div>

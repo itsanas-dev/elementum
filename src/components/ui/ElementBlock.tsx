@@ -2,33 +2,44 @@ import { getTextColour } from "@/lib/colour"
 import { getEntryColour } from "@/lib/periodicTable"
 import { displayDecimal } from "@/lib/string"
 import { ConfigContext } from "@/provider/ConfigContext"
-import type { TableElement } from "@/lib/types"
 import clsx from "clsx"
 import React, { useContext, useMemo, type CSSProperties, type JSX, type MouseEvent } from "react"
+import { AdaptiveTooltipContext } from "@/provider/AdaptiveTooltipContext"
+import { AppContext } from "@/provider/PeriodicTableContext"
 
 type ElementBlockComponentProps = Omit<JSX.IntrinsicElements["button"], "onClick"> & {
-  element: TableElement,
+  elementId: string,
   onClick?: (e: MouseEvent<HTMLButtonElement, globalThis.MouseEvent>) => void,
 }
 
-function ElementBlockComponent({ element, onClick, className, ...rest }: ElementBlockComponentProps) {
+function ElementBlockComponent({ elementId, onClick, className, ...rest }: ElementBlockComponentProps) {
   const {theme} = useContext(ConfigContext);
+  const { state } = useContext(AdaptiveTooltipContext);
+  const { elementTable } = useContext(AppContext);
+  const element = elementTable?.elements[elementId];
   const [colour, textColour] = useMemo(() => {
+    if (!element) return [];
+
     const c = getEntryColour(theme, element);
     return [c, getTextColour(c)];
   }, [theme, element]);
   
-  const style = {"--main-color": colour, "--text-color": textColour, gridColumn: element.xpos, gridRow: element.ypos} as CSSProperties;
+  const style = element ? ({"--main-color": colour, "--text-color": textColour, gridColumn: element.xpos, gridRow: element.ypos} as CSSProperties) : null;
+
+  if (!element) return null;
 
   return (
     <>
       <button 
           {...rest}
-          data-entry-type={element.type} 
           role="gridcell"
+          data-entry-type={element.type}
+          data-selected={(state?.elementId === elementId)}
+          data-element={elementId}
+          aria-labelledby={state?.elementId === elementId ? `element-info-modal` : undefined}
           onClick={(e) => onClick?.(e)}
           className={clsx("table-entry", className)}
-          style={style} 
+          style={style!} 
           aria-label={`${element.name} (${element.symbol}), with atomic number ${element.number.toFixed(0)} and atomic mass ${displayDecimal(element.atomic_mass)}`}
         >
         <span className="element-symbol" aria-hidden>{element.symbol}</span>

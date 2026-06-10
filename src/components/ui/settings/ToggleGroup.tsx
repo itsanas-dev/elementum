@@ -48,6 +48,8 @@ export function ToggleGroup({ selected, config, onSelectionChanged, className, .
   const currentlySelected = useRef(selected);
   const onSelectionChangedRef = useRef(onSelectionChanged);
 
+  // Storing the currently selected item in a ref, so you don't re-attach all
+  // of the event listeners when an option is selected or deselected.
   useEffect(() => {
     currentlySelected.current = selected;
     onSelectionChangedRef.current = onSelectionChanged;
@@ -82,9 +84,13 @@ export function ToggleGroup({ selected, config, onSelectionChanged, className, .
       targetSibling.focus();
     }
 
-    //
     function onFocusIn(e: FocusEvent) {
+      // Weird behaviour, where focusin runs when the modal is created with
+      // e.relatedTarget as one of the sentinel div elements. This causes stale closure issues otherwise, if we don't check it
+      if (!e.relatedTarget || (e.relatedTarget as HTMLElement).dataset.focustrap) return;
+
       const target = e.target as HTMLElement;
+
       if (!groupEl.contains(target)) return;
 
       const value = target.dataset.value;
