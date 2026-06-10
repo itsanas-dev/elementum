@@ -18,6 +18,8 @@
   --color-togglegroup-border: oklch(0.5032 0 0 / 40%);
   --color-focusvisible: oklch(65.587% 0.18182 250.023);
 
+  --color-warning: #d9d06d;
+
   --code-font: "Source Code Pro", monospace;
 }
 
@@ -31,20 +33,16 @@
   --color-br-separator: oklch(0.6886 0.0073 295.38 / 46.3%);
   --modal-boxshadow: 0 10px 15px -3px oklch(0.173 0 0 / 10%), 0 4px 6px -4px oklch(0.173 0 0 / 8%);
   
-  --color-searchentry-hover: oklch(0.3171 0 0 / 5%);
-  --color-searchentry-click: oklch(0.3171 0 0 / 8%);
+  --color-searchentry-hover: oklch(0.3171 0 0 / 2%);
+  --color-searchentry-click: oklch(0.3171 0 0 / 5%);
 
   --color-togglegroup-bg: oklch(97.67% 0.00275 285.75);
   --color-togglegroup-hover: oklch(49.616% 0.00006 271.152 / 0.05);
   --color-togglegroup-selected: oklch(49.616% 0.00006 271.152 / 0.09);
   --color-togglegroup-border: oklch(62.675% 0.00007 271.152 / 0.34);
   --color-focusvisible: oklch(67.967% 0.174 248.44);
-}
 
-@media (prefers-reduced-motion: no-preference) {
-  :root[data-themechange="true"]:not([data-themechange-reducemotion="true"]) * {
-    transition: color 220ms ease, background 220ms ease;
-  } 
+  --color-warning: oklch(95.008% 0.13508 103.692);
 }
 
 #__tooltip-portal {

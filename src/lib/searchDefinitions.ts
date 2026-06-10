@@ -210,11 +210,6 @@ export const searchSchema: Partial<Record<SearchAction, SearchSchemaEntry>> = {
   "elements_in_period": {
     keywords: ["period", "p"],
     params: {minElementArguments: 0, needsExactElementArguments: true, allowCompounds: false, quantityArguments: {"period": "scalar"}}
-  },
-
-  "empirical_formula_by_composition": {
-    keywords: ["composition", "empirical formula"],
-    params: {minElementArguments: 1, allowCompounds: false, quantityArguments: {}}
   }
 } as const;
 

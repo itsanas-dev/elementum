@@ -45,8 +45,8 @@ function ElementBlockComponent({ elementId, onClick, className, ...rest }: Eleme
         <span className="element-symbol" aria-hidden>{element.symbol}</span>
         <span className="entry-name" aria-hidden>{element.name}</span>
       
-        <span className="text-muted label-atomic-number" aria-hidden>{element.number.toFixed(0)}</span>
-        <span className="text-muted label-atomic-mass" aria-hidden>{displayDecimal(element.atomic_mass)}</span>
+        <span className="label-atomic-number" aria-hidden>{element.number.toFixed(0)}</span>
+        <span className="label-atomic-mass" aria-hidden>{displayDecimal(element.atomic_mass)}</span>
       </button>
     </>
   )

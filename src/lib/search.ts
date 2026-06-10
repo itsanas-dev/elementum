@@ -6,12 +6,13 @@ import { displayDecimal, displayMoles, isNumeric } from "./string"
 import type { FormulaComponent, ParsedElement, SearchAction, SearchCandidate } from "./searchTypes"
 import { isStopWord, searchSchema } from "./searchDefinitions"
 
-type SearchWarning = | {kind: "unknown_element", token: string}
-                     | {kind: "element_only_query", name: string}
-                     | {kind: "argument_mismatch", received: number, expected: number, name: string }
-                     | {kind: "unsupported_operation", message: string}
-                     | {kind: "quantity_mismatch", required: NumericQuantityType[], searchAction: string}
-                     | {kind: "unexpected_quantity", actionName: string}
+export type SearchWarningKind = | { kind: "unknown_element", token: string }
+                                | { kind: "element_only_query" }
+                                | { kind: "argument_mismatch", received: number, expected: number }
+                                | { kind: "quantity_mismatch", required: NumericQuantityType[] }
+                                | { kind: "unexpected_quantity" }
+
+export type SearchWarning = { actionId: string } & SearchWarningKind
 
 type PeriodicTableSearchContext = {
   allElements: PeriodicTableSchema,
@@ -435,7 +436,7 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
 
   const elementMap: ParsedElement[] = [];
   const filteredWords: string[] = [];
-  const warnings: SearchWarning[] = [];
+  const potentialWarnings: SearchWarning[] = [];
   const quantities = [];
 
   let hasCompounds = false;
@@ -535,21 +536,28 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
 
       if (searchEntry.params.quantityArguments && !argumentSet.isSubsetOf(quantitiesSet)) {
         // I'm not looping over the list to get the exact arguments missing, too much work
-        warnings.push({kind: "quantity_mismatch", required: Array.from<NumericQuantityType>(argumentSet), searchAction: entryKey})
+        potentialWarnings.push({
+          kind: "quantity_mismatch", 
+          required: Array.from<NumericQuantityType>(argumentSet), 
+          actionId: entryKey
+        })
         continue;
       }
     } else if (quantitiesSet.size > 0) {
       // Unlike elements, we aren't lenient with the number or presence of numerical values
       // in non-numeric search queries because words can overlap.
-      warnings.push({kind: "unexpected_quantity", actionName: entryKey})
+      potentialWarnings.push({
+        kind: "unexpected_quantity", 
+        actionId: entryKey
+      })
       continue;
     }
 
     // If we have some compound in our search, skip the actions that can't or don't allow compounds.
     if (!searchEntry.params.allowCompounds && hasCompounds) {
-      warnings.push({
+      potentialWarnings.push({
         kind: "element_only_query",
-        name: entryKey
+        actionId: entryKey
       })
       continue;
     }
@@ -559,11 +567,11 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
       (!searchEntry.params.needsExactElementArguments && searchEntry.params.minElementArguments > elementMap.length) ||
       (searchEntry.params.needsExactElementArguments && searchEntry.params.minElementArguments !== elementMap.length)
     ) {
-      warnings.push({
+      potentialWarnings.push({
         kind: "argument_mismatch",
         expected: searchEntry.params.minElementArguments,
         received: elementMap.length,
-        name: entryKey
+        actionId: entryKey
       });
       continue;
     }
@@ -593,14 +601,14 @@ export function evaluateUserSearch(rawQuery: string, validate?: (potentialElemen
       evaluation: [
         {type: "unknown", confidence: 1}
       ],
-      warnings,
+      warnings: potentialWarnings,
       params: {elements: [], quantities}
     }
   }
 
   return {
     evaluation: sortedbyConfidence,
-    warnings,
+    warnings: [],
     params: { elements: elementMap, quantities }
   }
 }

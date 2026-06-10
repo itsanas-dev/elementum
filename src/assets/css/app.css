@@ -18,6 +18,45 @@
     transform-origin: center;
     animation: spinner-load 600ms linear infinite;
   }
+  
+  .label-atomic-mass {
+    --translate-x: 0.175rem;
+    --translate-y: -0.175rem;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+  }
+
+  .label-atomic-number {
+    --translate-x: 0.25rem;
+    --translate-y: 0.25rem;
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+
+  .label-atomic-mass, .label-atomic-number {
+    font-size: 0.6rem;
+    color: var(--color-text-muted);
+    transform: translate(var(--translate-x), var(--translate-y));
+  }
+
+  .element-symbol {
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+
+  .entry-name {
+    margin-top: -3px;
+    font-size: 0.6rem;
+  }
+
+  .separator-range-label {
+    font-weight: 600;
+    font-size: 0.825rem;
+    margin-bottom: 3px;
+    text-wrap: nowrap;
+  }
 
   .table-entry {
     --main-color: white;
@@ -154,44 +193,6 @@
     min-width: 1000px;
     /* transform: scale(100% / 1500px); */
   }
-    
-  .label-atomic-mass {
-    --translate-x: 0.175rem;
-    --translate-y: -0.175rem;
-    position: absolute;
-    left: 0;
-    bottom: 0;
-  }
-
-  .label-atomic-number {
-    --translate-x: 0.25rem;
-    --translate-y: 0.25rem;
-    position: absolute;
-    left: 0;
-    top: 0;
-  }
-
-  .label-atomic-mass, .label-atomic-number {
-    font-size: 0.6rem;
-    transform: translate(var(--translate-x), var(--translate-y));
-  }
-
-  .element-symbol {
-    font-size: 1.25rem;
-    font-weight: 800;
-  }
-
-  .entry-name {
-    margin-top: -3px;
-    font-size: 0.6rem;
-  }
-
-  .separator-range-label {
-    font-weight: 600;
-    font-size: 0.825rem;
-    margin-bottom: 3px;
-    text-wrap: nowrap;
-  }
 }
 
 @layer utilities {
@@ -201,7 +202,7 @@
 }
 
 @media screen and (min-width: 1320px) {
-  @layer layout {
+  @layer base {
     .entry-name {
       font-size: 0.7rem;
     }
@@ -213,7 +214,7 @@
 }
 
 @media screen and (min-width: 1600px) {
-  @layer layout {
+  @layer base {
     .entry-name {
       font-size: 0.9rem;
     }
@@ -225,7 +226,7 @@
 }
 
 @media screen and (max-width: 1200px) {
-  @layer layout {
+  @layer base {
     .separator-range-label {
       font-size: 0.75rem;
     }
@@ -233,7 +234,7 @@
 }
 
 @media screen and (max-width: 1130px) {
-  @layer layout {
+  @layer base {
     .label-atomic-mass {
       font-size: 0.525rem;
     }
@@ -255,7 +256,7 @@
 }
 
 @media screen and (max-width: 990px) {
-  @layer layout {
+  @layer base {
     .label-atomic-mass {
       display: none;
     }

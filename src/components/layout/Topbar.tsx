@@ -2,7 +2,7 @@ import { ConfigContext } from "@/provider/ConfigContext"
 import type { AppTheme } from "@/lib/types";
 import { MoonIcon, Settings, SunIcon } from "lucide-react";
 import { useContext, useRef, useState } from "react"
-import Searchbar from "@/components/ui/searchbar/Searchbox";
+import Searchbar from "@/components/ui/searchbox/Searchbox";
 import "@/assets/css/topbar.css"
 import SettingsModal from "./modal/SettingsModal";
 
@@ -23,14 +23,11 @@ export default function Toolbar() {
 
     const newTheme = getThemeToggle(theme);
 
-    document.documentElement.setAttribute("data-themechange", "true");
     setTheme(newTheme);
 
-    // Very crude fixed timeout. Add a more flexible approach later.
     setTimeout(() => {
       canChange.current = true;
-      document.documentElement.removeAttribute("data-themechange");
-    }, 250)
+    }, 50)
   }
 
   return (

@@ -1,6 +1,6 @@
 import clsx from "clsx"
 import { CircleQuestionMark, EqualIcon, Search } from "lucide-react"
-import { useContext, useId, useMemo, useRef, useState, type InputEvent, type JSX, type KeyboardEvent } from "react"
+import React, { useContext, useId, useMemo, useRef, useState, type InputEvent, type JSX, type KeyboardEvent } from "react"
 import { buildQuantityRecord, evaluateUserSearch, getIntendedArgumentCount, getQuantitiesRequiredForEntry, type SearchEvaluation } from "@/lib/search"
 import LoadingFallback from "../../fallback/LoadingFallback"
 import { AppContext } from "@/provider/PeriodicTableContext"
@@ -9,6 +9,7 @@ import { SearchboxEntry } from "./SearchboxEntry"
 import { markupMolecularFormula } from "@/lib/markup"
 import "@/assets/css/searchbox.css"
 import type { PeriodicTableSchema } from "@/lib/types"
+import SearchboxWarning from "./SearchboxWarning"
 
 type SearchboxStatus = {
   focused: boolean,
@@ -121,6 +122,10 @@ function SearchboxQueryResults({ query }: {query: SearchEvaluation}) {
         />
       )
     })}
+
+    {query.warnings?.map((warning, index) => (
+      <SearchboxWarning key={`${warning.kind}-${index}`} warning={warning} />
+    ))}
   </>
 }
 
@@ -200,12 +205,25 @@ export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["
     }, 500)
   }
 
-  function onBlur() {
+  function onBlur(e: React.FocusEvent<HTMLDivElement>) {
+    const target = (e.relatedTarget as HTMLElement);
+
+    // Hacky fix to stop it from closing.
+    if (searchboxContentRef.current?.contains(target)) {
+      e.preventDefault();
+      searchboxInputRef.current?.focus();
+      return;
+    }
+
     setSearchboxState((s) => ({...s, focused: false}))
   }
 
   function onFocus() {
-    setSearchboxState((s) => ({...s, focused: true}))
+    setSearchboxState((s) => {
+      if (s.focused) return s;
+
+      return ({...s, focused: true})
+    });
   }
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
@@ -255,7 +273,6 @@ export default function Searchbar({className, ...rest }: JSX.IntrinsicElements["
 
       {(searchboxState.focused && searchboxState.status !== "empty") &&
         <div 
-          tabIndex={-1} 
           ref={searchboxContentRef} 
           className="searchbox-content"
           id={listboxId}
