@@ -21,7 +21,9 @@ const searchHelpEntries: [string, string][] = [
   ["electron affinity, e- affinity of", "Get the electron affinity of an element"],
   ["electronegativity of, EN of", "Get the electronegativity of an element."],
   ["EN difference of, EN diff of", "Gets the E.N difference between two elements"],
-  ["Empirical formula of, composition formula of", "Gets the empirical formula of a compound"]
+  ["Empirical formula of, composition formula of", "Gets the empirical formula of a compound"],
+  ["Moles in 1kg of, moles in 1 mg of Ca", "Gets the moles in an arbitrary mass of an element or compound"],
+  ["Mass in 2mol, Mass in 2 kmol of Na(SO4)2", "Gets the mass of some moles of a compound or element"]
 ]
 
 const queryExamples: string[] = [
@@ -70,7 +72,7 @@ function AppContent() {
         </div>
 
         <p className="section-line">
-          Queries are very open-ended especially when it comes to phrasing them. If you have any problems with the queries, create an issues request on the Github page.
+          Queries are very open-ended especially when it comes to phrasing them. If you have any problems with the queries or you want to add keywords or new queries, create a pull request on the Github repo page.
         </p>
       </div>
     </>

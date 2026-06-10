@@ -38,8 +38,7 @@ export type SearchAction = "unknown" |
                            "mass_in_moles" |
                            "moles_in_mass" |
                            "elements_in_group" |
-                           "elements_in_period" |
-                           "volume_in_concentration"
+                           "elements_in_period"
 
 export type SearchSchemaEntry = {
   keywords: string[],
