@@ -246,7 +246,7 @@ export function evaluateSearchIntent(
     case "elements_in_group": {
       const group = quantities.group.converted;
 
-      if (!Number.isInteger(group) || (group < 1 || group > 18)) return null;
+      if (!Number.isInteger(group) || (group <= 0 || group > tableAll.groups)) return null;
 
       const elements = groupLookup[`group_${group}`];
 
@@ -267,7 +267,7 @@ export function evaluateSearchIntent(
     case "elements_in_period": {
       const period = quantities.period.converted;
 
-      if (!Number.isInteger(period) || (period < 1 || period > 8)) return null;
+      if (!Number.isInteger(period) || (period <= 0 || period > tableAll.periods)) return null;
 
       const elements = periodLookup[`period_${period}`];
 
