@@ -1,4 +1,4 @@
-import type { Atom, FormulaComponent } from "./searchTypes";
+import type { Atom, FormulaComponent } from "@/lib/searchTypes";
 
 function flattenComposition(composition: FormulaComponent[]): Atom[] {
   const totals = new Map<string, number>();

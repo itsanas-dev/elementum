@@ -1,5 +1,5 @@
-import { displayDecimal, isNumeric } from "./string"
-import type { DensityUnit, TemperatureUnit } from "./types"
+import { displayDecimal, isNumeric } from "@/lib/string"
+import type { DensityUnit, TemperatureUnit } from "@/lib/types"
 
 export type NumericQuantityType = | "scalar"
                                   | "mass"  

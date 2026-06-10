@@ -1,4 +1,4 @@
-import type { SearchAction, SearchSchemaEntry } from "./searchTypes";
+import type { SearchAction, SearchSchemaEntry } from "@/lib/searchTypes";
 
 export const searchSchema: Partial<Record<SearchAction, SearchSchemaEntry>> = {
   "molar_mass": {

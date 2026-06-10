@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { evaluateUserSearch, parseCompound } from "../search";
+import { evaluateUserSearch, parseCompound } from "@/lib/search";
 
 describe("evaluateUserSearch", () => {
   it.each([

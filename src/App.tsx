@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import type { PeriodicTableSchema } from './lib/types'
-import AdaptiveTooltipProvider from './components/provider/AdaptiveTooltipProvider';
-import AppProvider from './components/provider/AppProvider';
-import Topbar from './components/layout/Topbar';
+import type { PeriodicTableSchema } from '@/lib/types'
+import AdaptiveTooltipProvider from '@/components/provider/AdaptiveTooltipProvider';
+import AppProvider from '@/components/provider/AppProvider';
+import Topbar from '@/components/layout/Topbar';
 import { PeriodicTable } from '@/components/layout/PeriodicTable';
-import LoadingFallback from './components/fallback/LoadingFallback';
+import LoadingFallback from '@/components/fallback/LoadingFallback';
 import '@/assets/css/app.css'
 
 const searchHelpEntries: [string, string][] = [

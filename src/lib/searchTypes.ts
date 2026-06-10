@@ -1,4 +1,4 @@
-import type { NumericQuantityType } from "./unitConversion"
+import type { NumericQuantityType } from "@/lib/unitConversion"
 
 export type Atom = {
   id: string,
@@ -38,7 +38,8 @@ export type SearchAction = "unknown" |
                            "mass_in_moles" |
                            "moles_in_mass" |
                            "elements_in_group" |
-                           "elements_in_period" 
+                           "elements_in_period" |
+                           "volume_in_concentration"
 
 export type SearchSchemaEntry = {
   keywords: string[],

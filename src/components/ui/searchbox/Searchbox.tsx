@@ -2,14 +2,14 @@ import clsx from "clsx"
 import { CircleQuestionMark, EqualIcon, Search } from "lucide-react"
 import React, { useContext, useId, useMemo, useRef, useState, type InputEvent, type JSX, type KeyboardEvent } from "react"
 import { buildQuantityRecord, evaluateUserSearch, getIntendedArgumentCount, getQuantitiesRequiredForEntry, type SearchEvaluation } from "@/lib/search"
-import LoadingFallback from "../../fallback/LoadingFallback"
+import LoadingFallback from "@/components/fallback/LoadingFallback"
 import { AppContext } from "@/provider/PeriodicTableContext"
 import type { SearchCandidate } from "@/lib/searchTypes"
-import { SearchboxEntry } from "./SearchboxEntry"
 import { markupMolecularFormula } from "@/lib/markup"
-import "@/assets/css/searchbox.css"
 import type { PeriodicTableSchema } from "@/lib/types"
+import { SearchboxEntry } from "./SearchboxEntry"
 import SearchboxWarning from "./SearchboxWarning"
+import "@/assets/css/searchbox.css"
 
 type SearchboxStatus = {
   focused: boolean,

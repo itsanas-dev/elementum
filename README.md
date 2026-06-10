@@ -7,7 +7,7 @@
 
   ![License GPL-v3](https://img.shields.io/badge/LICENSE-GPL_v3-brightgreen?style=for-the-badge)
   
-  <a href="https://github.com/itsanas-dev/elementum/issues"><img src="https://img.shields.io/github/issues/itsanas-dev/elementum?style=for-the-badge&color=%23ffde47" /></a>
+  <a href="https://github.com/itsanas-dev/elementum/issues"><img src="https://img.shields.io/github/issues/itsanas-dev/elementum?style=for-the-badge&color=%23ffde46" /></a>
   
   <p style="margin-top: 1rem;">
     An interactive, fast and entirely local Periodic Table website.

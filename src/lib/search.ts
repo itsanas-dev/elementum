@@ -1,10 +1,10 @@
 import type { Config, MarkupType, PeriodicTableSchema, TableElement } from "@/lib/types"
-import { calculateAtomicMass, constructMolecularFormula } from "./periodicTable"
+import { calculateAtomicMass, constructMolecularFormula } from "@/lib/periodicTable"
 import { getDensityByConfig, getTemperatureByConfig, getUnitMultiplier, type NumericQuantityType, parsePhysicalQuantity, type PhysicalQuantity } from "@/lib/unitConversion"
-import { getEmpiricalFormula } from "./empiricalFormula"
-import { displayDecimal, displayMoles, isNumeric } from "./string"
-import type { FormulaComponent, ParsedElement, SearchAction, SearchCandidate } from "./searchTypes"
-import { isStopWord, searchSchema } from "./searchDefinitions"
+import { getEmpiricalFormula } from "@/lib/empiricalFormula"
+import { displayDecimal, displayMoles, isNumeric } from "@/lib/string"
+import type { FormulaComponent, ParsedElement, SearchAction, SearchCandidate } from "@/lib/searchTypes"
+import { isStopWord, searchSchema } from "@/lib/searchDefinitions"
 
 export type SearchWarningKind = | { kind: "unknown_element", token: string }
                                 | { kind: "element_only_query" }

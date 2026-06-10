@@ -1,5 +1,5 @@
-import { getElectronsInSubshell } from "./periodicTable";
-import type { SubshellType } from "./types";
+import { getElectronsInSubshell } from "@/lib/periodicTable";
+import type { SubshellType } from "@/lib/types";
 
 function calculateCaretOffset(inputElement: HTMLElement) {
   const sel = window.getSelection();

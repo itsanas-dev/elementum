@@ -1,6 +1,6 @@
 import { type AppTheme, type SubshellType, type PeriodicTableSchema, type TableSeries, type TableElement } from "@/lib/types";
-import { AppThemes } from "./theme";
-import type { FormulaComponent, ParsedElement } from "./searchTypes";
+import { AppThemes } from "@/lib/theme";
+import type { FormulaComponent, ParsedElement } from "@/lib/searchTypes";
 
 const maxElectrons: Record<SubshellType, number> = {
   s: 2,

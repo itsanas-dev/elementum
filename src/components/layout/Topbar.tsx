@@ -3,8 +3,8 @@ import type { AppTheme } from "@/lib/types";
 import { MoonIcon, Settings, SunIcon } from "lucide-react";
 import { useContext, useRef, useState } from "react"
 import Searchbar from "@/components/ui/searchbox/Searchbox";
+import SettingsModal from "@/components/layout/modal/SettingsModal";
 import "@/assets/css/topbar.css"
-import SettingsModal from "./modal/SettingsModal";
 
 function getThemeToggle(theme: AppTheme): AppTheme {
   return theme === "dark" ? "light" : "dark";
