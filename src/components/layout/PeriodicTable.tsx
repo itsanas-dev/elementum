@@ -11,10 +11,8 @@ function PeriodicTableComponent() {
   function onElementBlockClick(elementId: string, e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
     if (e.button !== 0) return;
     if (state?.elementId === elementId) return;
-
+    
     const target = e.target as HTMLElement;
-
-    if (state?.trigger === target) return;
 
     showTooltip(elementId, target);
   }
