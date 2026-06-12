@@ -216,7 +216,7 @@ export const searchSchema: Partial<Record<SearchAction, SearchSchemaEntry>> = {
 const searchStopWords = new Set([
   "what", "of", "is", "the", "and", "be", "no",
   "for", "to", "in", "give", "show", "display", "why", "are",
-  "were", "was", "there", "find", "get", "provide", "state", "explain"
+  "were", "was", "there", "find", "get", "provide", "explain"
 ]);
 
 export function isStopWord(word: string) {
